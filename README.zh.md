@@ -17,3 +17,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 后续可通过 [GitHub Releases](https://github.com/davidliu-swimdad/swim-dynasty/releases) 更新带版本的离线包。数据采集流程独立运行，仓库提供游戏代码、语言资源、设计和虚构演示数据。
 
 更新中文界面程序后，可以编辑 `tools/english.txt` 并运行 `python3 tools/build_english.py`，生成随游戏发布的英文页面。
+
+## 许可证
+
+游戏代码采用 [GNU AGPL v3.0](LICENSE)。离线数据包通过 Release 附件单独分发。

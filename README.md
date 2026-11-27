@@ -17,3 +17,7 @@ The initial save starts with a fictional team. To try importing, open **Packs**,
 Versioned offline packs can be attached to [GitHub Releases](https://github.com/davidliu-swimdad/swim-dynasty/releases). The data collection pipeline runs separately. This repository includes the game, its localization, design, and fictional demo.
 
 To update English UI copy, edit `tools/english.txt` and run `python3 tools/build_english.py` after changing the Chinese source page. The generated English page ships with the game.
+
+## License
+
+The game code is licensed under [GNU AGPL v3.0](LICENSE). Offline data packs are distributed separately as release assets.
