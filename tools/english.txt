@@ -1,0 +1,283 @@
+训练与比赛|Training and racing
+女队|Women
+泳池|Pool
+训练计划|Training plan
+推进一周|Advance one week
+重开存档|Restart save
+测试模式|Test mode
+行动力不限|Unlimited actions
+泳池页面|Pool page
+分组|Groups
+泳池训练|Pool training
+陆上训练|Dryland training
+周报|Weekly report
+比赛|Meet
+数据包|Packs
+编组|Group assignment
+每周成绩|Weekly times
+训练变化|Training changes
+导入更多比赛|Import more meets
+选择数据包目录|Select pack folder
+浏览器无法使用离线存储|Offline storage is unavailable
+有氧|Aerobic
+冲刺|Sprint
+泳姿技术|Stroke technique
+转身|Turns
+水下腿|Underwaters
+打水|Kick
+全力|Max effort
+包干间歇|Send-off intervals
+目标配速|Target pace
+恢复|Recovery
+力量|Strength
+活动度|Mobility
+海豚腿|Dolphin kick
+交接棒|Relay exchange
+队员|Swimmer
+本组暂无队员|No swimmers in this group
+疲劳偏高，增加|Fatigue is high. Increase␠
+组内长项走势落后，转|Distance events are slipping. Move␠
+到有氧| to aerobic work
+组内短项走势落后，转|Sprint events are slipping. Move␠
+到冲刺| to sprint work
+慢|Slower
+快|Faster
+变化|Change
+短项|Sprint
+长项|Distance
+平均疲劳|Average fatigue
+模拟周榜较上周|Simulated weekly times vs. last week
+连续两周的项目成绩不足，先按开档成绩和疲劳安排|Two weeks of event times are needed. Using opening times and fatigue for now
+耐力|Endurance
+速度|Speed
+技术|Technique
+低|Low
+中|Medium
+高|High
+自由泳|Freestyle
+仰泳|Backstroke
+蛙泳|Breaststroke
+蝶泳|Butterfly
+混合泳|Medley
+码| yd
+浏览器无法保存进度。本次操作在页面内有效|Progress could not be saved. Changes apply to this page only
+第|#
+周|Week
+截至|as of
+耐力变化|Endurance change
+速度变化|Speed change
+技术变化|Technique change
+疲劳变化|Fatigue change
+陆上净疲劳|Net dryland fatigue
+赛季状态|Season form
+推进一周后查看训练效果|Advance one week to see training effects
+秒| s
+虚拟成绩，查看和结算均不消耗体力|Simulated times. Viewing and scoring use no energy
+名次|Place
+本周|This week
+开档基准|Opening baseline
+较赛季初|vs. season start
+较上周|vs. last week
+换算|Converted
+推进一周后，所有项目会自动生成成绩。旧存档从下一次结算开始记录完整周榜|Advance one week to generate times for every event. Older saves start full weekly tracking on the next advance
+属性层|Attribute layer
+当前值|Current value
+基础能力|Base ability
+专项|Specialty
+天赋与性格|Traits and personality
+适应性|Adaptability
+性格待定|Personality pending
+当前状态|Current state
+疲劳|Fatigue
+士气|Morale
+忠诚度|Loyalty
+后天特技|Learned skills
+待研究与专项培养|Research and focused training pending
+身份与诉求|Profile and goals
+相性|Affinity
+个人诉求待定|Personal goals pending
+队友相性|Teammate affinity
+队友|Teammate
+本周训练和队内成绩已结算|Weekly training and team times calculated
+清空|Clear␠
+训练与比赛进度| training and race progress
+已开启新存档|New save started
+副教练|Assistant coach
+组|Group
+周教练建议|Weekly coaching advice
+减量周|Taper week
+推荐减轻泳池训练并暂停陆上负荷|Reduce pool intensity and pause dryland load
+应用赛前减量|Apply taper
+查看三组本周训练建议|View weekly advice for all three groups
+建议分组|Recommended groups
+状态与调整依据|Condition and rationale
+建议分配|Recommended split
+应用本周三组建议|Apply advice for all three groups
+自动编组和训练|Auto-group and plan
+拖动队员到目标组，或点卡片下方的组号。点姓名查看档案|Drag swimmers to a group or click a group number. Click a name to open the profile
+人| swimmers
+暂无开档成绩|No opening times
+移到第|Move to group␠
+当前存档有旧版待结算计划。推进一周后可使用新版训练|This save has a pending legacy plan. Advance one week to use the updated editor
+训练方向|Training focus
+综合|Balanced
+训练内容|Workout
+占本组容量|Share of group capacity
+分配|Allocation
+容量|Capacity
+目标配速按小组泳姿和现有成绩自动设定|Target pace is set from the group stroke and available times
+已分配|Allocated
+剩余|Remaining
+自动方案会替换分组和泳池训练比例。陆上计划仅保留同泳姿组的配置。继续|Auto planning replaces groups and pool allocations. Dryland plans carry over for matching strokes. Continue
+已应用自动教练方案|Automatic plan applied
+缩减组数会移除被撤销组的泳池和陆上训练比例。继续|Reducing group count removes pool and dryland allocations for those groups. Continue
+应用本周三组建议会替换泳池计划。陆上计划仅保留同泳姿组配置。继续|Applying the advice replaces pool plans. Dryland plans carry over for matching strokes. Continue
+已应用本周三组建议，可继续手动调整|Weekly advice applied. You can still make adjustments
+将各组泳池计划设为恢复、清空陆上负荷|Set pool plans to recovery and clear dryland load
+应用后仍可手动调整|You can make adjustments afterward
+已应用赛前减量，可继续手动调整|Taper applied. You can still make adjustments
+名队员| swimmers
+沿用泳池训练分组。陆上容量单独计算，疲劳与泳池训练一起结算|Uses the pool groups. Dryland has a separate budget and its fatigue is calculated together with pool work
+占陆上容量|Share of dryland capacity
+力量练速度，有氧练耐力，活动度练技术。恢复减少疲劳。陆上训练不直接提升赛季状态|Strength develops speed, aerobic work develops endurance, and mobility develops technique. Recovery reduces fatigue. Dryland does not directly improve season form
+大小不符合要求| size is invalid
+无法读取|Cannot read␠
+缺少比赛或赛季清单| is missing a meet or season manifest
+解压后过大| exceeds the unpacked size limit
+已损坏| is damaged
+这是赛季基础包，请从数据包标签导入|Import this season pack from the Packs tab
+比赛数据格式不受支持|Unsupported meet format
+项目数据不完整|Incomplete event data
+成绩或分段校验失败|Invalid results or splits
+有选手缺少项目成绩|A swimmer has no baseline for this event
+已结算|Scored
+当前球队没有可用比赛包。可在数据包标签选择目录，或在下方导入|No meets for this team. Select a folder on the Packs tab or import a meet below
+选择比赛后即可排阵|Select a meet to set the lineup
+比赛包包含|Meet pack contains␠
+个项目。结算后可对照官方成绩| events. Score the meet to compare with official results
+自动排阵|Auto lineup
+总分优先|Maximize total score
+双队均衡|Balance both relay teams
+兼顾前面项目、赛间负荷和压轴接力。完整包|Accounts for early events, race load and final relays. Full pack
+人名单，每人最多| swimmers. Per athlete: up to␠
+项个人赛| individual events
+项接力，个人| relays. Individual␠
+不计兼项| is exempt from the event cap
+选择要安排的位置|Select a lineup slot
+队|Team
+棒|Leg␠
+名额|Slot
+空|Empty
+清空此位置|Clear this slot
+操作|Action
+已选|Selected
+选入此位置|Assign to this slot
+模拟并结算比赛|Simulate and score meet
+推进到比赛日后结算|Advance to meet day to score
+请先排满所有项目|Fill all lineup slots first
+结算后显示官方成绩及分段|Official results and splits appear after scoring
+轮|Round
+模拟阵容未晋级此轮| did not advance to this round
+你的模拟结果|Your simulated results
+模拟分段是估算。接力首棒用个人出发，后续使用接棒估算|Splits are estimates. The first relay leg uses a flat start and later legs use estimated exchanges
+会累积前项和轮间负荷。对手以首轮实绩作对照| accumulates event and round load. Opponents use first-round reference times
+模拟名次|Simulated place
+阵容|Lineup
+模拟成绩|Simulated time
+状态影响|Form effect
+接棒|Exchange
+轮间修正|Between-round adjustment
+每|per␠
+分段|Splits
+含换算基准|Includes converted times
+负荷|Load
+官方结果|Official results
+选手|Swimmer
+队伍|Team
+官方成绩|Official time
+反应时间|Reaction time
+模拟并列第一|Tied for first in simulation
+出线待判|Qualification pending
+模拟出线| qualified in simulation
+模拟未出线| did not qualify in simulation
+男女积分合计第一取得总决赛席位。模拟按历史蝶泳|The highest combined women and men score advances. The simulation uses historical butterfly␠
+和现有轮间模型结算| and the current between-round model
+学校|School
+女子模拟|Women, simulated
+男子实绩|Men, recorded
+模拟合计|Simulated total
+历史合计|Historical total
+历史积分|Historical points
+男子实绩积分|Recorded men points
+官方合计|Official total
+这场比赛与当前赛季球队不匹配|This meet does not match the active team
+已加载离线比赛|Offline meet loaded
+导入失败|Import failed
+在|With␠
+人及兼项限制下找不到完整阵容，请检查基准覆盖| swimmers and the current event caps, no full lineup was found. Check baseline coverage
+用|Use␠
+方案替换现有排阵| to replace the current lineup
+已安排所有项目。还可以手动换人|All events are assigned. You can still adjust the lineup
+比赛已结算|Meet scored
+开档日期无效|Invalid start date
+赛季包格式不受支持|Unsupported season pack
+赛季名单无效|Invalid season roster
+赛季成绩无效|Invalid season results
+缺少开档游泳成绩|Missing opening swim times
+名计分| scoring places
+运动员|Athlete
+积分|Points
+开档|Start
+换季|Season transition
+女子游泳决赛试算|Women’s Swimming Finals Projection
+推进至|Advance to␠
+赛季|Season
+举办|Run␠
+决赛|Finals
+从开档重跑|Restart projection
+校| schools
+按年级推算离队，按届别推算秋季入队。决赛使用|Departures follow class year and recruits join in the fall. Finals use the␠
+秋季基准，接力用个人成绩估算。赛会不含跳水、资格筛选及预赛| fall baseline. Relays use individual times. Diving, selection and preliminaries are excluded
+在队|On roster
+入队|Joined
+累计|Cumulative
+离队|Departed
+年级待核对|Class year unverified
+当前赛季|Active season
+内置演示|Built-in demo
+返回内置赛季|Return to built-in season
+目录中的数据包|Packs in folder
+选择一次目录，游戏会扫描其中的|Select a folder to scan for␠
+名运动员| athletes
+场赛程| scheduled meets
+条开档成绩| opening times
+个项目| events
+开档日期|Start date
+进入该赛季|Start this season
+加载比赛|Load meet
+未识别的|Unrecognized␠
+查看赛程|View schedule
+日期|Date
+对手|Opponent
+查看|View␠
+届承诺记录| recruiting commitments
+入学届别|Entry class
+首次采集|First observed
+状态|Status
+截至当前日期的已收录成绩|Results available as of current date
+存档内尚未公开|Not yet public in this save
+来源报道，待校方核验|Reported commitment, awaiting school confirmation
+用户录入，待核验|User-submitted, unverified
+暂无|None
+无法加载数据包|Could not load pack
+离线数据包|Offline packs
+离线比赛|Offline meets
+开档日期决定已知成绩；导入各校赛季包后可运行跨赛季决赛试算|The start date sets which times are available. Import school packs to run the cross-season finals projection
+内置演示|Built-in demo
+本队|Team
+设计文档|Design
+中文|中文
+计划|Plan
+陆上|Dryland
+项目|Event
+教练建议|Coaching advice

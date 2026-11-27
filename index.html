@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swim Dynasty · P0 训练与比赛</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f1ec;color:#282126;font:16px/1.5 system-ui,sans-serif}header{background:#671327;color:#fff;padding:28px max(5vw,18px)}header p,h1{margin:0}h1{font:clamp(32px,6vw,58px) Georgia,serif}main{max-width:1070px;margin:auto;padding:18px}.panel{background:#fff;border:1px solid #e2d7d5;border-radius:12px;padding:17px;margin:12px 0}h2{font-size:20px;margin:0 0 10px}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}label{display:grid;gap:4px}button,select,input{font:inherit;padding:7px 10px;border:1px solid #bca8ac;border-radius:7px;background:#fff;color:inherit}button{cursor:pointer}.primary{background:#7f1931;color:white;border-color:#7f1931}button:disabled{opacity:.45;cursor:default}small,.muted{color:#65585d}a{color:#83192f}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}td,th{text-align:left;padding:7px;border-bottom:1px solid #eee}#msg{min-height:1.5em;color:#83192f}summary{cursor:pointer;font-weight:bold}.date{font-variant-numeric:tabular-nums}
+
+.group-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:8px;margin:12px 0}.group-grid label{display:flex;gap:5px;align-items:center;flex-wrap:wrap}.group-grid button[aria-pressed=true],#groupControls button[aria-pressed=true],#planList button[aria-pressed=true]{background:#7f1931;color:white}.plan-table input[type=range]{width:clamp(105px,25vw,290px);accent-color:#7f1931;padding:0}.plan-table input[type=number]{width:76px}.plan-table small{display:block}.member-picker{margin-top:10px}.group-title{margin-top:15px}.plan-table td:first-child{white-space:normal;min-width:110px}
+
+[hidden]{display:none!important}button[aria-pressed=true]{background:#7f1931;color:#fff}.squad-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-top:14px}.squad{background:#f5efec;border:1px solid #dfd0cc;border-radius:10px;padding:10px;min-height:105px}.squad.over{outline:2px solid #7f1931}.athlete-card{background:#fff;border:1px solid #e5d9d6;border-radius:8px;margin:8px 0;padding:8px}.athlete-card>button{border:0;padding:2px 0;font-weight:700;text-align:left}.athlete-card small{display:block}.move{gap:5px;margin-top:5px}.move button{padding:1px 7px;font-size:13px}.focus-card{margin-top:14px}#eventTabs{gap:5px}#eventTabs button{font-size:14px;padding:5px 9px}.faster{color:#176348}.slower{color:#8c2337}
+</style>
+</head><body>
+<nav style="padding: .7rem 1rem" aria-label="Language"><a href="./index.html" lang="zh-CN">中文</a> · <a href="./en.html" lang="en">English</a> · <a href="./docs/design.zh.html">设计文档</a></nav>
+<header><p id="teamTitle">SWIM DYNASTY DEMO</p><h1>Swim Dynasty</h1><p id="seasonTitle">2026–27 女队 · 泳池 / 训练计划</p></header>
+<main>
+<div class="panel row"><strong id="date" class="date"></strong><button class="primary" id="advance">推进一周</button><button id="reset">重开存档</button><small>测试模式 · 行动力不限</small></div>
+<div id="msg" role="status"></div>
+<nav id="views" class="row" aria-label="泳池页面"><button data-view="squads">分组</button><button data-view="training">泳池训练</button><button data-view="dryland">陆上训练</button><button data-view="weekly">周报</button><button data-view="meet">比赛</button><button data-view="packs">数据包</button></nav>
+<section class="panel" id="squads"><h2>编组</h2><div id="groupControls"></div><div id="board"></div><div id="profile"></div></section>
+<section class="panel" id="training"><h2>训练计划</h2><div id="planList"></div></section>
+<section class="panel" id="dryland" hidden><h2>陆上训练计划</h2><div id="drylandPlan"></div></section>
+<section class="panel" id="weekly"><h2>每周成绩</h2><div id="eventTabs" class="row" aria-label="比赛项目"></div><div id="result"></div><details><summary>训练变化</summary><div id="report"></div></details></section>
+<section class="panel" id="meet" hidden><h2>离线比赛</h2><div id="meetPicker"></div><div id="meetBody"></div><details><summary>导入更多比赛</summary><label>比赛 ZIP<input type="file" id="meetFile" accept=".zip,application/zip"></label></details></section>
+<section class="panel" id="packs" hidden><h2>离线数据包</h2><p class="muted">开档日期决定已知成绩；导入各校赛季包后可运行跨赛季决赛试算。</p><label>选择数据包目录<input type="file" id="packFolder" webkitdirectory multiple></label><div id="packList"></div></section>
+</main>
+<script type="module">
+const snapshot={"roster": [{"id": "demo-01", "name": "Demo Swimmer 01", "discipline": "swimming", "year": "Sophomore"}, {"id": "demo-02", "name": "Demo Swimmer 02", "discipline": "swimming", "year": "Junior"}, {"id": "demo-03", "name": "Demo Swimmer 03", "discipline": "swimming", "year": "Senior"}, {"id": "demo-04", "name": "Demo Swimmer 04", "discipline": "swimming", "year": "Freshman"}, {"id": "demo-05", "name": "Demo Swimmer 05", "discipline": "swimming", "year": "Sophomore"}, {"id": "demo-06", "name": "Demo Swimmer 06", "discipline": "swimming", "year": "Junior"}, {"id": "demo-07", "name": "Demo Swimmer 07", "discipline": "swimming", "year": "Senior"}, {"id": "demo-08", "name": "Demo Swimmer 08", "discipline": "swimming", "year": "Freshman"}, {"id": "demo-09", "name": "Demo Swimmer 09", "discipline": "swimming", "year": "Sophomore"}, {"id": "demo-10", "name": "Demo Swimmer 10", "discipline": "swimming", "year": "Junior"}, {"id": "demo-11", "name": "Demo Swimmer 11", "discipline": "swimming", "year": "Senior"}, {"id": "demo-12", "name": "Demo Swimmer 12", "discipline": "swimming", "year": "Freshman"}, {"id": "demo-13", "name": "Demo Swimmer 13", "discipline": "swimming", "year": "Sophomore"}, {"id": "demo-14", "name": "Demo Swimmer 14", "discipline": "swimming", "year": "Junior"}, {"id": "demo-15", "name": "Demo Swimmer 15", "discipline": "swimming", "year": "Senior"}, {"id": "demo-16", "name": "Demo Swimmer 16", "discipline": "swimming", "year": "Freshman"}], "results": [{"id": "demo-01", "event": "50 Free", "date": "2026-09-01", "seconds": 23.2}, {"id": "demo-01", "event": "100 Free", "date": "2026-09-01", "seconds": 50.93}, {"id": "demo-01", "event": "200 Free", "date": "2026-09-01", "seconds": 112.63}, {"id": "demo-01", "event": "500 Free", "date": "2026-09-01", "seconds": 306.6}, {"id": "demo-01", "event": "1650 Free", "date": "2026-09-01", "seconds": 1077.33}, {"id": "demo-01", "event": "50 Back", "date": "2026-09-01", "seconds": 28.71}, {"id": "demo-01", "event": "100 Back", "date": "2026-09-01", "seconds": 55.31}, {"id": "demo-01", "event": "200 Back", "date": "2026-09-01", "seconds": 120.62}, {"id": "demo-01", "event": "50 Breast", "date": "2026-09-01", "seconds": 30.34}, {"id": "demo-01", "event": "100 Breast", "date": "2026-09-01", "seconds": 66.5}, {"id": "demo-01", "event": "200 Breast", "date": "2026-09-01", "seconds": 146.89}, {"id": "demo-01", "event": "50 Fly", "date": "2026-09-01", "seconds": 27.33}, {"id": "demo-01", "event": "100 Fly", "date": "2026-09-01", "seconds": 54.6}, {"id": "demo-01", "event": "200 Fly", "date": "2026-09-01", "seconds": 122.31}, {"id": "demo-01", "event": "200 IM", "date": "2026-09-01", "seconds": 125.33}, {"id": "demo-01", "event": "400 IM", "date": "2026-09-01", "seconds": 269.52}, {"id": "demo-02", "event": "50 Free", "date": "2026-09-01", "seconds": 24.1}, {"id": "demo-02", "event": "100 Free", "date": "2026-09-01", "seconds": 52.88}, {"id": "demo-02", "event": "200 Free", "date": "2026-09-01", "seconds": 116.87}, {"id": "demo-02", "event": "500 Free", "date": "2026-09-01", "seconds": 317.96}, {"id": "demo-02", "event": "1650 Free", "date": "2026-09-01", "seconds": 1021.22}, {"id": "demo-02", "event": "50 Back", "date": "2026-09-01", "seconds": 27.24}, {"id": "demo-02", "event": "100 Back", "date": "2026-09-01", "seconds": 57.44}, {"id": "demo-02", "event": "200 Back", "date": "2026-09-01", "seconds": 125.21}, {"id": "demo-02", "event": "50 Breast", "date": "2026-09-01", "seconds": 31.47}, {"id": "demo-02", "event": "100 Breast", "date": "2026-09-01", "seconds": 63.0}, {"id": "demo-02", "event": "200 Breast", "date": "2026-09-01", "seconds": 139.28}, {"id": "demo-02", "event": "50 Fly", "date": "2026-09-01", "seconds": 25.94}, {"id": "demo-02", "event": "100 Fly", "date": "2026-09-01", "seconds": 56.7}, {"id": "demo-02", "event": "200 Fly", "date": "2026-09-01", "seconds": 126.93}, {"id": "demo-02", "event": "200 IM", "date": "2026-09-01", "seconds": 130.0}, {"id": "demo-02", "event": "400 IM", "date": "2026-09-01", "seconds": 255.41}, {"id": "demo-03", "event": "50 Free", "date": "2026-09-01", "seconds": 25.0}, {"id": "demo-03", "event": "100 Free", "date": "2026-09-01", "seconds": 50.1}, {"id": "demo-03", "event": "200 Free", "date": "2026-09-01", "seconds": 110.82}, {"id": "demo-03", "event": "500 Free", "date": "2026-09-01", "seconds": 301.73}, {"id": "demo-03", "event": "1650 Free", "date": "2026-09-01", "seconds": 1060.5}, {"id": "demo-03", "event": "50 Back", "date": "2026-09-01", "seconds": 28.27}, {"id": "demo-03", "event": "100 Back", "date": "2026-09-01", "seconds": 59.58}, {"id": "demo-03", "event": "200 Back", "date": "2026-09-01", "seconds": 118.66}, {"id": "demo-03", "event": "50 Breast", "date": "2026-09-01", "seconds": 29.85}, {"id": "demo-03", "event": "100 Breast", "date": "2026-09-01", "seconds": 65.45}, {"id": "demo-03", "event": "200 Breast", "date": "2026-09-01", "seconds": 144.61}, {"id": "demo-03", "event": "50 Fly", "date": "2026-09-01", "seconds": 26.91}, {"id": "demo-03", "event": "100 Fly", "date": "2026-09-01", "seconds": 58.8}, {"id": "demo-03", "event": "200 Fly", "date": "2026-09-01", "seconds": 120.32}, {"id": "demo-03", "event": "200 IM", "date": "2026-09-01", "seconds": 123.33}, {"id": "demo-03", "event": "400 IM", "date": "2026-09-01", "seconds": 265.29}, {"id": "demo-04", "event": "50 Free", "date": "2026-09-01", "seconds": 23.72}, {"id": "demo-04", "event": "100 Free", "date": "2026-09-01", "seconds": 52.05}, {"id": "demo-04", "event": "200 Free", "date": "2026-09-01", "seconds": 115.06}, {"id": "demo-04", "event": "500 Free", "date": "2026-09-01", "seconds": 313.09}, {"id": "demo-04", "event": "1650 Free", "date": "2026-09-01", "seconds": 1099.78}, {"id": "demo-04", "event": "50 Back", "date": "2026-09-01", "seconds": 26.79}, {"id": "demo-04", "event": "100 Back", "date": "2026-09-01", "seconds": 56.53}, {"id": "demo-04", "event": "200 Back", "date": "2026-09-01", "seconds": 123.24}, {"id": "demo-04", "event": "50 Breast", "date": "2026-09-01", "seconds": 30.98}, {"id": "demo-04", "event": "100 Breast", "date": "2026-09-01", "seconds": 67.9}, {"id": "demo-04", "event": "200 Breast", "date": "2026-09-01", "seconds": 137.0}, {"id": "demo-04", "event": "50 Fly", "date": "2026-09-01", "seconds": 25.52}, {"id": "demo-04", "event": "100 Fly", "date": "2026-09-01", "seconds": 55.8}, {"id": "demo-04", "event": "200 Fly", "date": "2026-09-01", "seconds": 124.95}, {"id": "demo-04", "event": "200 IM", "date": "2026-09-01", "seconds": 128.0}, {"id": "demo-04", "event": "400 IM", "date": "2026-09-01", "seconds": 275.17}, {"id": "demo-05", "event": "50 Free", "date": "2026-09-01", "seconds": 24.62}, {"id": "demo-05", "event": "100 Free", "date": "2026-09-01", "seconds": 54.0}, {"id": "demo-05", "event": "200 Free", "date": "2026-09-01", "seconds": 109.0}, {"id": "demo-05", "event": "500 Free", "date": "2026-09-01", "seconds": 296.87}, {"id": "demo-05", "event": "1650 Free", "date": "2026-09-01", "seconds": 1043.67}, {"id": "demo-05", "event": "50 Back", "date": "2026-09-01", "seconds": 27.83}, {"id": "demo-05", "event": "100 Back", "date": "2026-09-01", "seconds": 58.67}, {"id": "demo-05", "event": "200 Back", "date": "2026-09-01", "seconds": 127.83}, {"id": "demo-05", "event": "50 Breast", "date": "2026-09-01", "seconds": 29.36}, {"id": "demo-05", "event": "100 Breast", "date": "2026-09-01", "seconds": 64.4}, {"id": "demo-05", "event": "200 Breast", "date": "2026-09-01", "seconds": 142.33}, {"id": "demo-05", "event": "50 Fly", "date": "2026-09-01", "seconds": 26.49}, {"id": "demo-05", "event": "100 Fly", "date": "2026-09-01", "seconds": 57.9}, {"id": "demo-05", "event": "200 Fly", "date": "2026-09-01", "seconds": 129.58}, {"id": "demo-05", "event": "200 IM", "date": "2026-09-01", "seconds": 121.33}, {"id": "demo-05", "event": "400 IM", "date": "2026-09-01", "seconds": 261.06}, {"id": "demo-06", "event": "50 Free", "date": "2026-09-01", "seconds": 23.33}, {"id": "demo-06", "event": "100 Free", "date": "2026-09-01", "seconds": 51.21}, {"id": "demo-06", "event": "200 Free", "date": "2026-09-01", "seconds": 113.24}, {"id": "demo-06", "event": "500 Free", "date": "2026-09-01", "seconds": 308.22}, {"id": "demo-06", "event": "1650 Free", "date": "2026-09-01", "seconds": 1082.94}, {"id": "demo-06", "event": "50 Back", "date": "2026-09-01", "seconds": 28.86}, {"id": "demo-06", "event": "100 Back", "date": "2026-09-01", "seconds": 55.61}, {"id": "demo-06", "event": "200 Back", "date": "2026-09-01", "seconds": 121.28}, {"id": "demo-06", "event": "50 Breast", "date": "2026-09-01", "seconds": 30.5}, {"id": "demo-06", "event": "100 Breast", "date": "2026-09-01", "seconds": 66.85}, {"id": "demo-06", "event": "200 Breast", "date": "2026-09-01", "seconds": 147.66}, {"id": "demo-06", "event": "50 Fly", "date": "2026-09-01", "seconds": 25.1}, {"id": "demo-06", "event": "100 Fly", "date": "2026-09-01", "seconds": 54.9}, {"id": "demo-06", "event": "200 Fly", "date": "2026-09-01", "seconds": 122.97}, {"id": "demo-06", "event": "200 IM", "date": "2026-09-01", "seconds": 126.0}, {"id": "demo-06", "event": "400 IM", "date": "2026-09-01", "seconds": 270.93}, {"id": "demo-07", "event": "50 Free", "date": "2026-09-01", "seconds": 24.23}, {"id": "demo-07", "event": "100 Free", "date": "2026-09-01", "seconds": 53.16}, {"id": "demo-07", "event": "200 Free", "date": "2026-09-01", "seconds": 117.48}, {"id": "demo-07", "event": "500 Free", "date": "2026-09-01", "seconds": 292.0}, {"id": "demo-07", "event": "1650 Free", "date": "2026-09-01", "seconds": 1026.83}, {"id": "demo-07", "event": "50 Back", "date": "2026-09-01", "seconds": 27.38}, {"id": "demo-07", "event": "100 Back", "date": "2026-09-01", "seconds": 57.75}, {"id": "demo-07", "event": "200 Back", "date": "2026-09-01", "seconds": 125.87}, {"id": "demo-07", "event": "50 Breast", "date": "2026-09-01", "seconds": 31.63}, {"id": "demo-07", "event": "100 Breast", "date": "2026-09-01", "seconds": 63.35}, {"id": "demo-07", "event": "200 Breast", "date": "2026-09-01", "seconds": 140.04}, {"id": "demo-07", "event": "50 Fly", "date": "2026-09-01", "seconds": 26.08}, {"id": "demo-07", "event": "100 Fly", "date": "2026-09-01", "seconds": 57.0}, {"id": "demo-07", "event": "200 Fly", "date": "2026-09-01", "seconds": 127.59}, {"id": "demo-07", "event": "200 IM", "date": "2026-09-01", "seconds": 130.67}, {"id": "demo-07", "event": "400 IM", "date": "2026-09-01", "seconds": 256.82}, {"id": "demo-08", "event": "50 Free", "date": "2026-09-01", "seconds": 25.13}, {"id": "demo-08", "event": "100 Free", "date": "2026-09-01", "seconds": 50.38}, {"id": "demo-08", "event": "200 Free", "date": "2026-09-01", "seconds": 111.42}, {"id": "demo-08", "event": "500 Free", "date": "2026-09-01", "seconds": 303.36}, {"id": "demo-08", "event": "1650 Free", "date": "2026-09-01", "seconds": 1066.11}, {"id": "demo-08", "event": "50 Back", "date": "2026-09-01", "seconds": 28.41}, {"id": "demo-08", "event": "100 Back", "date": "2026-09-01", "seconds": 59.89}, {"id": "demo-08", "event": "200 Back", "date": "2026-09-01", "seconds": 119.31}, {"id": "demo-08", "event": "50 Breast", "date": "2026-09-01", "seconds": 30.01}, {"id": "demo-08", "event": "100 Breast", "date": "2026-09-01", "seconds": 65.8}, {"id": "demo-08", "event": "200 Breast", "date": "2026-09-01", "seconds": 145.37}, {"id": "demo-08", "event": "50 Fly", "date": "2026-09-01", "seconds": 27.05}, {"id": "demo-08", "event": "100 Fly", "date": "2026-09-01", "seconds": 54.0}, {"id": "demo-08", "event": "200 Fly", "date": "2026-09-01", "seconds": 120.98}, {"id": "demo-08", "event": "200 IM", "date": "2026-09-01", "seconds": 124.0}, {"id": "demo-08", "event": "400 IM", "date": "2026-09-01", "seconds": 266.7}, {"id": "demo-09", "event": "50 Free", "date": "2026-09-01", "seconds": 23.84}, {"id": "demo-09", "event": "100 Free", "date": "2026-09-01", "seconds": 52.33}, {"id": "demo-09", "event": "200 Free", "date": "2026-09-01", "seconds": 115.66}, {"id": "demo-09", "event": "500 Free", "date": "2026-09-01", "seconds": 314.71}, {"id": "demo-09", "event": "1650 Free", "date": "2026-09-01", "seconds": 1010.0}, {"id": "demo-09", "event": "50 Back", "date": "2026-09-01", "seconds": 26.94}, {"id": "demo-09", "event": "100 Back", "date": "2026-09-01", "seconds": 56.83}, {"id": "demo-09", "event": "200 Back", "date": "2026-09-01", "seconds": 123.9}, {"id": "demo-09", "event": "50 Breast", "date": "2026-09-01", "seconds": 31.15}, {"id": "demo-09", "event": "100 Breast", "date": "2026-09-01", "seconds": 68.25}, {"id": "demo-09", "event": "200 Breast", "date": "2026-09-01", "seconds": 137.76}, {"id": "demo-09", "event": "50 Fly", "date": "2026-09-01", "seconds": 25.66}, {"id": "demo-09", "event": "100 Fly", "date": "2026-09-01", "seconds": 56.1}, {"id": "demo-09", "event": "200 Fly", "date": "2026-09-01", "seconds": 125.61}, {"id": "demo-09", "event": "200 IM", "date": "2026-09-01", "seconds": 128.67}, {"id": "demo-09", "event": "400 IM", "date": "2026-09-01", "seconds": 276.58}, {"id": "demo-10", "event": "50 Free", "date": "2026-09-01", "seconds": 24.75}, {"id": "demo-10", "event": "100 Free", "date": "2026-09-01", "seconds": 54.27}, {"id": "demo-10", "event": "200 Free", "date": "2026-09-01", "seconds": 109.61}, {"id": "demo-10", "event": "500 Free", "date": "2026-09-01", "seconds": 298.49}, {"id": "demo-10", "event": "1650 Free", "date": "2026-09-01", "seconds": 1049.28}, {"id": "demo-10", "event": "50 Back", "date": "2026-09-01", "seconds": 27.97}, {"id": "demo-10", "event": "100 Back", "date": "2026-09-01", "seconds": 58.97}, {"id": "demo-10", "event": "200 Back", "date": "2026-09-01", "seconds": 128.49}, {"id": "demo-10", "event": "50 Breast", "date": "2026-09-01", "seconds": 29.52}, {"id": "demo-10", "event": "100 Breast", "date": "2026-09-01", "seconds": 64.75}, {"id": "demo-10", "event": "200 Breast", "date": "2026-09-01", "seconds": 143.09}, {"id": "demo-10", "event": "50 Fly", "date": "2026-09-01", "seconds": 26.63}, {"id": "demo-10", "event": "100 Fly", "date": "2026-09-01", "seconds": 58.2}, {"id": "demo-10", "event": "200 Fly", "date": "2026-09-01", "seconds": 119.0}, {"id": "demo-10", "event": "200 IM", "date": "2026-09-01", "seconds": 122.0}, {"id": "demo-10", "event": "400 IM", "date": "2026-09-01", "seconds": 262.47}, {"id": "demo-11", "event": "50 Free", "date": "2026-09-01", "seconds": 23.46}, {"id": "demo-11", "event": "100 Free", "date": "2026-09-01", "seconds": 51.49}, {"id": "demo-11", "event": "200 Free", "date": "2026-09-01", "seconds": 113.84}, {"id": "demo-11", "event": "500 Free", "date": "2026-09-01", "seconds": 309.84}, {"id": "demo-11", "event": "1650 Free", "date": "2026-09-01", "seconds": 1088.56}, {"id": "demo-11", "event": "50 Back", "date": "2026-09-01", "seconds": 26.5}, {"id": "demo-11", "event": "100 Back", "date": "2026-09-01", "seconds": 55.92}, {"id": "demo-11", "event": "200 Back", "date": "2026-09-01", "seconds": 121.93}, {"id": "demo-11", "event": "50 Breast", "date": "2026-09-01", "seconds": 30.66}, {"id": "demo-11", "event": "100 Breast", "date": "2026-09-01", "seconds": 67.2}, {"id": "demo-11", "event": "200 Breast", "date": "2026-09-01", "seconds": 148.42}, {"id": "demo-11", "event": "50 Fly", "date": "2026-09-01", "seconds": 25.24}, {"id": "demo-11", "event": "100 Fly", "date": "2026-09-01", "seconds": 55.2}, {"id": "demo-11", "event": "200 Fly", "date": "2026-09-01", "seconds": 123.63}, {"id": "demo-11", "event": "200 IM", "date": "2026-09-01", "seconds": 126.67}, {"id": "demo-11", "event": "400 IM", "date": "2026-09-01", "seconds": 272.34}, {"id": "demo-12", "event": "50 Free", "date": "2026-09-01", "seconds": 24.36}, {"id": "demo-12", "event": "100 Free", "date": "2026-09-01", "seconds": 53.44}, {"id": "demo-12", "event": "200 Free", "date": "2026-09-01", "seconds": 118.08}, {"id": "demo-12", "event": "500 Free", "date": "2026-09-01", "seconds": 293.62}, {"id": "demo-12", "event": "1650 Free", "date": "2026-09-01", "seconds": 1032.44}, {"id": "demo-12", "event": "50 Back", "date": "2026-09-01", "seconds": 27.53}, {"id": "demo-12", "event": "100 Back", "date": "2026-09-01", "seconds": 58.06}, {"id": "demo-12", "event": "200 Back", "date": "2026-09-01", "seconds": 126.52}, {"id": "demo-12", "event": "50 Breast", "date": "2026-09-01", "seconds": 31.8}, {"id": "demo-12", "event": "100 Breast", "date": "2026-09-01", "seconds": 63.7}, {"id": "demo-12", "event": "200 Breast", "date": "2026-09-01", "seconds": 140.81}, {"id": "demo-12", "event": "50 Fly", "date": "2026-09-01", "seconds": 26.22}, {"id": "demo-12", "event": "100 Fly", "date": "2026-09-01", "seconds": 57.3}, {"id": "demo-12", "event": "200 Fly", "date": "2026-09-01", "seconds": 128.26}, {"id": "demo-12", "event": "200 IM", "date": "2026-09-01", "seconds": 120.0}, {"id": "demo-12", "event": "400 IM", "date": "2026-09-01", "seconds": 258.23}, {"id": "demo-13", "event": "50 Free", "date": "2026-09-01", "seconds": 25.26}, {"id": "demo-13", "event": "100 Free", "date": "2026-09-01", "seconds": 50.66}, {"id": "demo-13", "event": "200 Free", "date": "2026-09-01", "seconds": 112.03}, {"id": "demo-13", "event": "500 Free", "date": "2026-09-01", "seconds": 304.98}, {"id": "demo-13", "event": "1650 Free", "date": "2026-09-01", "seconds": 1071.72}, {"id": "demo-13", "event": "50 Back", "date": "2026-09-01", "seconds": 28.56}, {"id": "demo-13", "event": "100 Back", "date": "2026-09-01", "seconds": 55.0}, {"id": "demo-13", "event": "200 Back", "date": "2026-09-01", "seconds": 119.97}, {"id": "demo-13", "event": "50 Breast", "date": "2026-09-01", "seconds": 30.17}, {"id": "demo-13", "event": "100 Breast", "date": "2026-09-01", "seconds": 66.15}, {"id": "demo-13", "event": "200 Breast", "date": "2026-09-01", "seconds": 146.13}, {"id": "demo-13", "event": "50 Fly", "date": "2026-09-01", "seconds": 27.19}, {"id": "demo-13", "event": "100 Fly", "date": "2026-09-01", "seconds": 54.3}, {"id": "demo-13", "event": "200 Fly", "date": "2026-09-01", "seconds": 121.64}, {"id": "demo-13", "event": "200 IM", "date": "2026-09-01", "seconds": 124.67}, {"id": "demo-13", "event": "400 IM", "date": "2026-09-01", "seconds": 268.11}, {"id": "demo-14", "event": "50 Free", "date": "2026-09-01", "seconds": 23.97}, {"id": "demo-14", "event": "100 Free", "date": "2026-09-01", "seconds": 52.61}, {"id": "demo-14", "event": "200 Free", "date": "2026-09-01", "seconds": 116.27}, {"id": "demo-14", "event": "500 Free", "date": "2026-09-01", "seconds": 316.33}, {"id": "demo-14", "event": "1650 Free", "date": "2026-09-01", "seconds": 1015.61}, {"id": "demo-14", "event": "50 Back", "date": "2026-09-01", "seconds": 27.09}, {"id": "demo-14", "event": "100 Back", "date": "2026-09-01", "seconds": 57.14}, {"id": "demo-14", "event": "200 Back", "date": "2026-09-01", "seconds": 124.56}, {"id": "demo-14", "event": "50 Breast", "date": "2026-09-01", "seconds": 31.31}, {"id": "demo-14", "event": "100 Breast", "date": "2026-09-01", "seconds": 68.6}, {"id": "demo-14", "event": "200 Breast", "date": "2026-09-01", "seconds": 138.52}, {"id": "demo-14", "event": "50 Fly", "date": "2026-09-01", "seconds": 25.8}, {"id": "demo-14", "event": "100 Fly", "date": "2026-09-01", "seconds": 56.4}, {"id": "demo-14", "event": "200 Fly", "date": "2026-09-01", "seconds": 126.27}, {"id": "demo-14", "event": "200 IM", "date": "2026-09-01", "seconds": 129.33}, {"id": "demo-14", "event": "400 IM", "date": "2026-09-01", "seconds": 254.0}, {"id": "demo-15", "event": "50 Free", "date": "2026-09-01", "seconds": 24.88}, {"id": "demo-15", "event": "100 Free", "date": "2026-09-01", "seconds": 54.55}, {"id": "demo-15", "event": "200 Free", "date": "2026-09-01", "seconds": 110.21}, {"id": "demo-15", "event": "500 Free", "date": "2026-09-01", "seconds": 300.11}, {"id": "demo-15", "event": "1650 Free", "date": "2026-09-01", "seconds": 1054.89}, {"id": "demo-15", "event": "50 Back", "date": "2026-09-01", "seconds": 28.12}, {"id": "demo-15", "event": "100 Back", "date": "2026-09-01", "seconds": 59.28}, {"id": "demo-15", "event": "200 Back", "date": "2026-09-01", "seconds": 118.0}, {"id": "demo-15", "event": "50 Breast", "date": "2026-09-01", "seconds": 29.69}, {"id": "demo-15", "event": "100 Breast", "date": "2026-09-01", "seconds": 65.1}, {"id": "demo-15", "event": "200 Breast", "date": "2026-09-01", "seconds": 143.85}, {"id": "demo-15", "event": "50 Fly", "date": "2026-09-01", "seconds": 26.77}, {"id": "demo-15", "event": "100 Fly", "date": "2026-09-01", "seconds": 58.5}, {"id": "demo-15", "event": "200 Fly", "date": "2026-09-01", "seconds": 119.66}, {"id": "demo-15", "event": "200 IM", "date": "2026-09-01", "seconds": 122.67}, {"id": "demo-15", "event": "400 IM", "date": "2026-09-01", "seconds": 263.88}, {"id": "demo-16", "event": "50 Free", "date": "2026-09-01", "seconds": 23.59}, {"id": "demo-16", "event": "100 Free", "date": "2026-09-01", "seconds": 51.77}, {"id": "demo-16", "event": "200 Free", "date": "2026-09-01", "seconds": 114.45}, {"id": "demo-16", "event": "500 Free", "date": "2026-09-01", "seconds": 311.47}, {"id": "demo-16", "event": "1650 Free", "date": "2026-09-01", "seconds": 1094.17}, {"id": "demo-16", "event": "50 Back", "date": "2026-09-01", "seconds": 26.65}, {"id": "demo-16", "event": "100 Back", "date": "2026-09-01", "seconds": 56.22}, {"id": "demo-16", "event": "200 Back", "date": "2026-09-01", "seconds": 122.59}, {"id": "demo-16", "event": "50 Breast", "date": "2026-09-01", "seconds": 30.82}, {"id": "demo-16", "event": "100 Breast", "date": "2026-09-01", "seconds": 67.55}, {"id": "demo-16", "event": "200 Breast", "date": "2026-09-01", "seconds": 149.18}, {"id": "demo-16", "event": "50 Fly", "date": "2026-09-01", "seconds": 25.38}, {"id": "demo-16", "event": "100 Fly", "date": "2026-09-01", "seconds": 55.5}, {"id": "demo-16", "event": "200 Fly", "date": "2026-09-01", "seconds": 124.29}, {"id": "demo-16", "event": "200 IM", "date": "2026-09-01", "seconds": 127.33}, {"id": "demo-16", "event": "400 IM", "date": "2026-09-01", "seconds": 273.76}]};
+const activeSeasonKey='swim-dynasty-active-season-v1';
+const seasonDb=await new Promise((resolve,reject)=>{const r=indexedDB.open('swim-dynasty-season-db',1);r.onupgradeneeded=()=>r.result.createObjectStore('seasons');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)}).catch(()=>null);
+async function seasonStore(mode,value){if(!seasonDb)throw Error('浏览器无法使用离线存储');return new Promise((resolve,reject)=>{const tx=seasonDb.transaction('seasons',mode==='get'?'readonly':'readwrite'),store=tx.objectStore('seasons');const req=mode==='get'?store.get(activeSeasonKey):mode==='delete'?store.delete(activeSeasonKey):store.put(value,activeSeasonKey);req.onsuccess=()=>{if(mode==='get')resolve(req.result)};tx.oncomplete=()=>{if(mode!=='get')resolve()};tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error)})}
+try{
+ const season=await seasonStore('get')??JSON.parse(localStorage.getItem(activeSeasonKey));
+ if(season?.kind==='season')Object.assign(snapshot,season,{roster:season.roster.filter(a=>a.discipline==='swimming')});
+}catch{}
+const builtinMeets=[{"schema": 2, "id": "demo-meet", "version": "1.0.0", "meet": {"name": "Demo Invitational", "date": "2026-10-02", "venue": "Demo Aquatic Center", "course": "SCY", "teams": ["Demo Rivals", "Swim Dynasty Demo"]}, "events": [{"id": "free100", "label": "100 Free", "pb": "100 Free", "slots": 2, "unit": "50 yd", "order": 1, "parts": 2, "kind": "individual", "rounds": 1}, {"id": "back100", "label": "100 Back", "pb": "100 Back", "slots": 2, "unit": "50 yd", "order": 2, "parts": 2, "kind": "individual", "rounds": 1}, {"id": "fly100", "label": "100 Fly", "pb": "100 Fly", "slots": 2, "unit": "50 yd", "order": 3, "parts": 2, "kind": "individual", "rounds": 1}], "results": {"free100": [{"place": 1, "team": "Demo Rivals", "name": "Demo Rival 1", "timeCs": 5090, "status": "OK", "splitsCs": [2545, 2545], "round": 1}, {"place": 2, "team": "Demo Rivals", "name": "Demo Rival 2", "timeCs": 5190, "status": "OK", "splitsCs": [2595, 2595], "round": 1}], "back100": [{"place": 1, "team": "Demo Rivals", "name": "Demo Rival 1", "timeCs": 5590, "status": "OK", "splitsCs": [2795, 2795], "round": 1}, {"place": 2, "team": "Demo Rivals", "name": "Demo Rival 2", "timeCs": 5690, "status": "OK", "splitsCs": [2845, 2845], "round": 1}], "fly100": [{"place": 1, "team": "Demo Rivals", "name": "Demo Rival 1", "timeCs": 5530, "status": "OK", "splitsCs": [2765, 2765], "round": 1}, {"place": 2, "team": "Demo Rivals", "name": "Demo Rival 2", "timeCs": 5630, "status": "OK", "splitsCs": [2815, 2815], "round": 1}]}}];
+const start = snapshot.start??'2026-09-18';
+const weekLabel=week=>document.documentElement.lang==='en'?'Week '+week:'第 '+week+' 周';
+const types={endurance:'有氧',speed:'冲刺',technique:'泳姿技术',turn:'转身',underwater:'水下腿',kick:'打水',allout:'All-out 全力',interval:'包干间歇',pace:'目标配速',recovery:'恢复'};
+const intensity={low:0.65,medium:1,high:1.35};
+const coachLevel=0.85;
+const tuning={carry:0.62, baselineRecovery:4, recovery:14, load:28, fatigueCost:0.00015,formCost:0.00075, growth:0.0008};
+const drills={
+ endurance:{stat:'endurance',gain:1,load:0.9},
+ speed:{stat:'speed',gain:1,load:1},
+ technique:{stat:'technique',gain:1,load:0.55},
+ turn:{stat:'technique',gain:0.42,load:0.62,component:'turn'},
+ underwater:{stat:'technique',gain:0.42,load:0.72,component:'underwater'},
+ kick:{stat:'endurance',gain:0.62,load:0.85,component:'kick'},
+ allout:{stat:'speed',gain:0.92,load:1.4},
+ pace:{stat:'endurance',gain:0.48,load:1.03},
+ interval:{stat:'endurance',gain:0.9,load:1.08}
+};
+const dryDrills={
+ weight:{label:'力量 · Weight',stat:'speed',gain:0.9,load:7},
+ cardio:{label:'有氧 · Cardio',stat:'endurance',gain:0.85,load:6},
+ mobility:{label:'活动度 · Mobility',stat:'technique',gain:0.45,load:1},
+ recovery:{label:'陆上恢复',gain:0,load:-4}
+};
+const dryGainScale=0.5;
+function drylandEffect(athlete,plan){
+ const gains={endurance:0,speed:0,technique:0};
+ let fatigue=0;
+ for(const [key,drill] of Object.entries(dryDrills)){
+  const dose=(plan?.[key]??0)/100;
+  if(drill.stat){
+   const stat=drill.stat;
+   gains[stat]+=dryGainScale*dose*drill.gain*athlete.talent.adaptation[stat]
+     *(1-athlete.current.fatigue/125)*(1-athlete.base[stat]/100);
+  }
+  fatigue+=dose*drill.load;
+ }
+ return {gains,fatigue};
+}
+function intervalDemand(set){
+ const seconds=(set?.minutes??1)*60+(set?.seconds??30);
+ const distance=set?.distance??100,reps=set?.reps??8;
+ return clamp((distance/Math.max(1,seconds))/(100/90)*0.6+Math.sqrt(distance*reps/800)*0.4,0.65,1.5);
+}
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const round=n=>Math.round(n*1000)/1000;
+const dateFor=week=>new Date(Date.parse(start)+week*604800000).toISOString().slice(0,10);
+const roster=snapshot.roster;
+const ids=roster.map(p=>p.id);
+const skills=['海豚腿','转身','交接棒'];
+const stats=['endurance','speed','technique'];
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pair=(a,b)=>[a,b].sort().join(':');
+function newSave(){
+ const athletes=Object.fromEntries(roster.map(p=>[p.id,{
+  base:{pb:snapshot.results.filter(r=>r.id===p.id),endurance:50,speed:50,technique:50,stroke:{}},
+  talent:{adaptation:Object.fromEntries(stats.map(k=>[k,rand(75,125)/100])),personality:null},
+  current:{fatigue:rand(10,25),morale:rand(55,75),loyalty:rand(65,85),form:rand(61,69)},
+  skills:Object.fromEntries(skills.map(s=>[s,{unlocked:false,progress:0}])),
+  identity:{team:snapshot.name??'Swim Dynasty Demo',role:'队员',coachAffinity:rand(35,80),aspirations:[]}
+ }]));
+ const affinities={};
+ for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)affinities[pair(ids[i],ids[j])]=rand(35,80);
+ return {version:1,week:0,athletes,affinities,plans:[],report:null,races:{}};
+}
+const applies=(plan,id)=>plan.target==='all'||plan.target===id;
+const loadFor=(game,id)=>game.plans.filter(p=>applies(p,id)).reduce((n,p)=>n+p.load,0);
+function addPlan(game,p){
+ if(!Object.hasOwn(types,p.type)||!Object.hasOwn(intensity,p.intensity)||!Number.isInteger(p.load)||p.load<1||p.load>100||(p.target!=='all'&&!ids.includes(p.target))) return false;
+ if(ids.some(id=>applies(p,id)&&loadFor(game,id)+p.load>100))return false;
+ game.plans.push(p);return true;
+}
+function upgradeSeason(game){
+ for(const id of ids){
+  const a=game.athletes[id];
+  a.current.form??=clamp(65+game.week*1.7,65,90);
+  for(const result of snapshot.results.filter(r=>r.id===id)){
+   if(!a.base.pb.some(p=>p.event===result.event))a.base.pb.push(result);
+  }
+ }
+}
+function advance(game){
+ const changes=roster.map(p=>{
+  const a=game.athletes[p.id],before=a.current.fatigue,formBefore=a.current.form??65;
+  const delta={endurance:0,speed:0,technique:0};
+  const stroke=a.base.stroke??={};
+  const components=a.base.components??={};
+  const pacing=a.base.pacing??={};
+  let fatigue=before*tuning.carry-tuning.baselineRecovery,practice=0;
+  for(const plan of game.plans.filter(item=>applies(item,p.id))){
+   const dose=plan.load/100*intensity[plan.intensity];
+   if(plan.type==='recovery'){fatigue-=tuning.recovery*dose;continue}
+   if(plan.type==='technique'&&plan.stroke&&plan.stroke!=='mixed'){
+    const level=stroke[plan.stroke]||0;
+    stroke[plan.stroke]=round(clamp(level+dose*a.talent.adaptation.technique*(1-before/125)*(1-level/30),0,30));
+   }
+   const drill=drills[plan.type],key=drill.stat;
+   practice+=Math.min(1,dose);
+   const demand=plan.set&&['endurance','speed','allout','kick','interval','pace'].includes(plan.type)?intervalDemand(plan.set):1;
+   if(plan.type==='pace'&&plan.event&&plan.split>0){
+    const pb=a.base.pb.find(r=>r.event===plan.event);
+    if(pb){
+     const reference=pb.seconds*(plan.set?.distance??50)/Number(plan.event.split(' ')[0]);
+     const quality=clamp(1-Math.abs(plan.split/reference-1)*2.5,0,1);
+     const prior=pacing[plan.event]||0;
+     pacing[plan.event]=round(clamp(prior+dose*quality*(1-before/125)*(1-prior/16),0,16));
+    }
+   }
+   const effective=dose*coachLevel*a.talent.adaptation[key]*(1-before/125);
+   delta[key]+=3*effective*drill.gain*Math.sqrt(demand)*(1-a.base[key]/100);
+   if(drill.component){
+    const prior=components[drill.component]||0;
+    components[drill.component]=round(clamp(prior+effective*(1-prior/30),0,30));
+   }
+   fatigue+=tuning.load*dose*drill.load*demand;
+  }
+  const dry=drylandEffect(a,game.training?.groups[game.training.assignment[p.id]]?.dryland);
+  fatigue+=dry.fatigue;
+  for(const key of stats){
+   delta[key]+=dry.gains[key];
+   const prior=a.base[key];a.base[key]=round(clamp(prior+delta[key],50,95));delta[key]=round(a.base[key]-prior);
+  }
+  a.current.fatigue=round(clamp(fatigue,0,100));
+  const formGain=clamp(practice,0,1)*3.2*(1-before/160)*(1-formBefore/125);
+  a.current.form=round(clamp(formBefore+formGain-(practice<0.15?0.28:0),50,100));
+  return {id:p.id,delta,before,after:a.current.fatigue,formBefore,formAfter:a.current.form,dryland:round(dry.fatigue)};
+ });
+ game.report={week:game.week,changes,groups:game.training?.groups.map((g,i)=>({number:i+1,set:g.load.interval>0?g.set:null}))};game.week++;game.plans=[];
+}
+function simulate(game,event){
+ if(game.week===0||game.races[game.week])return false;
+ const rows=[];
+ for(const p of roster){
+  const a=game.athletes[p.id],official=a.base.pb.find(r=>r.event===event);
+  if(!official)continue;
+  const distance=Number(event.split(' ')[0]),long=distance>=200;
+  const growth=long?0.55*a.base.endurance+0.15*a.base.speed+0.3*a.base.technique:0.15*a.base.endurance+0.55*a.base.speed+0.3*a.base.technique;
+  const base=round(official.seconds);
+  const specialization=a.base.stroke?.[event.split(' ')[1]]||0;
+  const components=a.base.components||{},turns=Math.max(0,Math.ceil(distance/25)-1);
+  const drillsSeconds=(components.turn||0)*turns*0.012
+    +(components.underwater||0)*(1+Math.min(turns,7))*0.014
+    +(components.kick||0)*Math.min(distance,200)*0.00035;
+  const training=round(-Math.min(base*0.025,base*((growth-50)*tuning.growth+specialization*0.0003)+drillsSeconds));
+  const fatigue=round(base*a.current.fatigue*tuning.fatigueCost);
+  const formGap=100-(a.current.form??65);
+  const formPenalty=round(base*formGap*tuning.formCost);
+  const morale=round(base*(65-a.current.morale)*0.0001);
+  const control=a.base.pacing?.[event]||0;
+  const endurance=a.base.endurance-50,speed=a.base.speed-50;
+  const fade=round(Math.max(0,1.4+(distance>=200?0.65:0)+a.current.fatigue*0.033+formGap*0.065+speed*0.009-endurance*0.035-control*0.32));
+  const variation=round(Math.max(0.1,0.75+a.current.fatigue*0.014-endurance*0.018-control*0.19));
+  rows.push({id:p.id,base,training,fatigue,morale,formPenalty,estimate:official.kind==='converted',fade,variation,total:round(base+training+fatigue+morale+formPenalty),source:official.url,date:official.date});
+ }
+ if(!rows.length)return false;
+ game.races[game.week]={event,rows:rows.sort((a,b)=>a.total-b.total)};
+ return true;
+}
+
+const coachGroups=['Free','Breast','IM'];
+const nameById=Object.fromEntries(roster.map(p=>[p.id,p.name]));
+const coachEvents=new Set(['50 Free','100 Free','200 Free','500 Free','1650 Free','100 Back','200 Back','100 Breast','200 Breast','100 Fly','200 Fly','200 IM','400 IM']);
+const eventMedians=Object.fromEntries([...coachEvents].map(event=>{
+ const times=snapshot.results.filter(r=>r.event===event).map(r=>r.seconds).sort((a,b)=>a-b);
+ return [event,times[Math.floor(times.length/2)]];
+}));
+const coachEvidence=Object.fromEntries(ids.map(id=>[id,snapshot.results.filter(r=>r.id===id&&coachEvents.has(r.event))
+ .map(r=>({...r,relative:r.seconds/eventMedians[r.event],stroke:r.event.split(' ')[1]}))
+ .sort((a,b)=>a.relative-b.relative)]));
+const mainDrills=['endurance','speed','technique','turn','underwater','recovery'];
+function autoTraining(game,strategy='balanced'){
+
+ const groups=coachGroups.map(stroke=>({stroke,load:Object.fromEntries(Object.keys(types).map(k=>[k,0])),set:{distance:50,reps:8,minutes:1,seconds:0}}));
+ const assignment={},members=groups.map(()=>[]);
+ for(const id of ids){
+  const profile=coachEvidence[id];
+  const prime=profile[0]?.stroke;
+  const bestSupported=profile.find(result=>coachGroups.includes(result.stroke));
+  const preferred=coachGroups.indexOf(strategy==='strict'?prime:bestSupported?.stroke);
+  let idx=preferred===-1?2:preferred;
+  if(strategy==='balanced'&&bestSupported){
+   const counts=members.map(g=>g.length);
+   const candidates=coachGroups.map((stroke,i)=>({i,cost:(profile.find(r=>r.stroke===stroke)?.relative??1.28)+counts[i]*0.012}));
+   idx=candidates.sort((a,b)=>a.cost-b.cost)[0].i;
+  }
+  assignment[id]=idx;members[idx].push(game.athletes[id]);
+ }
+ groups.forEach((g,i)=>{
+  const people=members[i];
+  if(!people.length)return;
+  const avg=get=>people.reduce((sum,a)=>sum+get(a),0)/people.length;
+  const event=i===2?'200 IM':'200 '+g.stroke;
+  const times=people.flatMap(a=>a.base.pb.filter(p=>p.event===event).map(p=>p.seconds/4)).sort((a,b)=>a-b);
+  g.pace={event,split:round(times[Math.floor(times.length/2)]??30)};
+  const fatigue=avg(a=>a.current.fatigue);
+  const recovery=fatigue>=30?40:fatigue>=20?30:20;
+  const pastLong=avg(a=>a.talent.adaptation.endurance-a.talent.adaptation.speed)>0;
+  Object.assign(g.load,{recovery,technique:i===1?25:20,turn:10,underwater:10,kick:5,speed:10});
+  const spare=100-Object.values(g.load).reduce((sum,n)=>sum+n,0);
+  if(spare>=0)g.load[pastLong?'endurance':'speed']+=spare;
+  else g.load.technique+=spare;
+ });
+ return {groups,assignment};
+}
+function compileTraining(training){
+ return ids.flatMap(id=>{
+  const g=training.groups[training.assignment[id]];
+  return Object.entries(g.load).filter(([,load])=>load>0)
+   .map(([type,load])=>({
+    target:id,type:type==='speed'&&g.sprint==='allout'?'allout':type,load,stroke:g.stroke,
+    set:type==='pace'||type==='interval'||g.setEnabled?g.set:undefined,
+    event:g.pace?.event,split:g.pace?.split,
+    intensity:type==='allout'||(type==='speed'&&g.sprint==='allout')?'high':'medium'
+   }));
+ });
+}
+
+function weeklyTrainingAdvice(game){
+ const plan=autoTraining(game),current=game.weekly?.[game.week],previous=game.weekly?.[game.week-1];
+ const weekly=b=>new Map(Object.entries(b??{}).flatMap(([event,rows])=>rows.map(r=>[event+':'+r.id,r.total])));
+ const latest=weekly(current),prior=weekly(previous);
+ const notes=plan.groups.map((g,i)=>{
+  const members=ids.filter(id=>plan.assignment[id]===i);
+  if(!members.length)return '本组暂无队员。';
+  const fatigue=members.reduce((sum,id)=>sum+game.athletes[id].current.fatigue,0)/members.length;
+  const changes={short:[],distance:[]};
+  for(const id of members){
+   for(const e of coachEvents){
+    const [dist,stroke]=e.split(' '),key=e+':'+id;
+    const a=latest.get(key),b=prior.get(key);
+    if(stroke===g.stroke&&a&&b)changes[Number(dist)>=200?'distance':'short'].push((a/b-1)*100);
+   }
+  }
+  const avg=rows=>rows.length?rows.reduce((a,b)=>a+b,0)/rows.length:null;
+  const short=avg(changes.short),distance=avg(changes.distance);
+  let adjustment='';
+  if(fatigue>=28){
+   const shift=Math.min(10,g.load.technique);
+   g.load.technique-=shift;g.load.recovery+=shift;
+   adjustment='疲劳偏高，增加 '+shift+'% 恢复。';
+  }else if(distance!==null&&distance>0.08&&distance>(short??0)+0.04){
+   const shift=Math.min(8,g.load.speed);
+   g.load.speed-=shift;g.load.endurance+=shift;
+   adjustment='组内长项走势落后，转 '+shift+'% 到有氧。';
+  }else if(short!==null&&short>0.08&&short>(distance??0)+0.04){
+   const shift=Math.min(8,g.load.technique);
+   g.load.technique-=shift;g.load.speed+=shift;
+   adjustment='组内短项走势落后，转 '+shift+'% 到冲刺。';
+  }
+  const trend=(label,n)=>n===null?'':label+(n>0?'慢 ':n<0?'快 ':'变化 ')+Math.abs(n).toFixed(2)+'%';
+  const trends=[trend('短项',short),trend('长项',distance)].filter(Boolean);
+  return '平均疲劳 '+fatigue.toFixed(1)+'。'+(trends.length?'模拟周榜较上周：'+trends.join('，')+'。':'连续两周的项目成绩不足，先按开档成绩和疲劳安排。')+adjustment;
+ });
+ return {plan,notes};
+}
+
+const el=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const names=Object.fromEntries(roster.map(p=>[p.id,p.name]));
+const attr={endurance:'耐力',speed:'速度',technique:'技术'};
+const levels={low:'低',medium:'中',high:'高'};
+const strokes={Free:'自由泳',Back:'仰泳',Breast:'蛙泳',Fly:'蝶泳',IM:'混合泳'};
+const eventLabel=e=>{const [dist,stroke]=e.split(' ');return dist+' 码'+strokes[stroke]};
+const opts=items=>items.map(([v,t])=>'<option value="'+esc(v)+'">'+esc(t)+'</option>').join('');
+const num=n=>n.toFixed(3);
+const signed=n=>(n>=0?'+':'')+num(n);
+const time=n=>n>=60?Math.floor(n/60)+':'+num(n%60).padStart(6,'0'):num(n);
+const key='swim-dynasty-training-p0-v1'+(snapshot.id?':'+snapshot.id+':'+snapshot.version:'')+(snapshot.originalStart&&snapshot.start!==snapshot.originalStart?':'+snapshot.start:'');
+let game;
+try{game=JSON.parse(localStorage.getItem(key))}catch{}
+if(game?.version!==1)game=newSave();
+upgradeSeason(game);
+function remember(){
+ try{localStorage.setItem(key,JSON.stringify(game));return true}catch{return false}
+}
+const notify=text=>el('msg').textContent=text;
+const update=(message='')=>{notify(remember()?message:'浏览器无法保存进度。本次操作在页面内有效。 '+message);render()};
+const raceEvents=new Set(['50 Free','100 Free','200 Free','500 Free','1650 Free','100 Back','200 Back','100 Breast','200 Breast','100 Fly','200 Fly','200 IM','400 IM']);
+const events=[...new Set(snapshot.results.map(p=>p.event))].filter(e=>raceEvents.has(e)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+let activeView='squads',activeAthlete=null,activeEvent=events[0];
+const table=(headers,rows)=>'<div class="scroll"><table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+function render(){
+ el('date').textContent=dateFor(game.week)+' · '+weekLabel(game.week+1);
+ renderGroups();renderDryland();
+ el('report').innerHTML=game.report?'<p>截至 '+dateFor(game.report.week+1)+'</p>'+table(['队员','耐力变化','速度变化','技术变化','疲劳变化','陆上净疲劳','赛季状态'],game.report.changes.map(p=>[esc(names[p.id]),...stats.map(k=>signed(p.delta[k])),num(p.before)+' → '+num(p.after),p.dryland===undefined?'—':signed(p.dryland),p.formBefore===undefined?'—':num(p.formBefore)+' → '+num(p.formAfter)])):'<p class="muted">推进一周后查看训练效果。</p>';
+ renderProfile();
+ renderWeekly();renderMeet();renderPacks();
+ for(const id of ['squads','training','dryland','weekly','meet','packs'])el(id).hidden=id!==activeView;
+ el('views').querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===activeView)));
+}
+function snapshotWeek(){
+ const races={};
+ for(const event of events){
+  const sandbox={...game,races:{}};
+  if(simulate(sandbox,event))races[event]=sandbox.races[game.week].rows;
+ }
+ game.weekly??={};game.weekly[game.week]=races;
+}
+function difference(seconds){
+ if(seconds===undefined)return '—';
+ return '<span class="'+(seconds<0?'faster':seconds>0?'slower':'')+'">'+signed(seconds)+' 秒</span>';
+}
+function renderWeekly(){
+ el('eventTabs').innerHTML=events.map(event=>'<button data-event="'+event+'" aria-pressed="'+(event===activeEvent)+'">'+eventLabel(event)+'</button>').join('');
+ const rows=game.weekly?.[game.week]?.[activeEvent];
+ const legacy=game.races?.[game.week-1];
+ const previous=game.weekly?.[game.week-1]?.[activeEvent]??(legacy?.event===activeEvent?legacy.rows:[]);
+ const last=Object.fromEntries(previous.map(r=>[r.id,r.total]));
+ el('result').innerHTML=rows?.length?'<p class="muted">截至 '+dateFor(game.week)+' · 虚拟成绩，查看和结算均不消耗体力。</p>'+table(['名次 / 队员','本周','开档基准','较赛季初','较上周'],rows.slice(0,8).map((r,i)=>[
+  (i+1)+' · '+esc(names[r.id]),'<strong>'+time(r.total)+'</strong>',time(r.base)+(r.estimate?' <small>换算</small>':''),difference(round(r.total-r.base)),
+  difference(last[r.id]===undefined?undefined:round(r.total-last[r.id]))
+ ])):'<p class="muted">推进一周后，所有项目会自动生成成绩。旧存档从下一次结算开始记录完整周榜。</p>';
+}
+function renderProfile(){
+ const id=activeAthlete;if(!id){el('profile').innerHTML='';return}const a=game.athletes[id];
+ el('profile').innerHTML='<h3>'+esc(names[id])+'</h3><p class="muted">'+coachEvidence[id].slice(0,3).map(p=>eventLabel(p.event)+' '+time(p.seconds)).join(' · ')+'</p>'+table(['属性层','当前值'],[
+ ['基础能力',stats.map(k=>attr[k]+' '+num(a.base[k])).join('　')+Object.entries(a.base.stroke||{}).map(([k,n])=>'　'+strokes[k]+'专项 '+num(n)).join('')],
+ ['天赋与性格',stats.map(k=>attr[k]+'适应性 '+Math.round(a.talent.adaptation[k]*100)+'%').join('　')+'　性格待定'],
+ ['当前状态','疲劳 '+num(a.current.fatigue)+'　赛季状态 '+Math.round(a.current.form)+'　士气 '+a.current.morale+'　忠诚度 '+a.current.loyalty],
+ ['后天特技',skills.join('、')+' · 待研究与专项培养'],
+ ['身份与诉求',esc(a.identity.team)+' · '+esc(a.identity.role)+'　Chris 相性 '+a.identity.coachAffinity+'　个人诉求待定']
+ ])+'<details><summary>队友相性</summary>'+table(['队友','相性'],ids.filter(other=>other!==id).map(other=>[esc(names[other]),game.affinities[pair(id,other)]]))+'</details>';
+}
+el('advance').onclick=()=>{
+ if(!game.plans.length)game.plans=groupPlans();
+ const plan=game.training;
+ const taper=plan?.taperWeek===game.week;
+ advance(game);
+ if(taper){
+  for(const g of plan.groups)g.load.recovery=0;
+  delete plan.taperWeek;
+ }
+ snapshotWeek();activeView='weekly';update('本周训练和队内成绩已结算。');
+};
+el('views').onclick=e=>{const b=e.target.closest('[data-view]');if(b){activeView=b.dataset.view;render()}};
+el('eventTabs').onclick=e=>{const b=e.target.closest('[data-event]');if(b){activeEvent=b.dataset.event;renderWeekly()}};
+el('reset').onclick=()=>{if(confirm('清空 P0 训练与比赛进度？')){game=newSave();selectedGroup=0;activeView='squads';activeAthlete=null;update('已开启新存档。')}};
+const defaultGroup=()=>({stroke:'mixed',load:Object.fromEntries(Object.keys(types).map(k=>[k,0]))});
+const captains=['Chris','副教练 1','副教练 2'];
+const quickDrills=[...mainDrills,'kick','pace'];
+let selectedGroup=0;
+const groupTotal=g=>Object.values(g.load).reduce((sum,n)=>sum+n,0);
+function training(){
+ if(!game.training)game.training={groups:[defaultGroup()],assignment:Object.fromEntries(ids.map(id=>[id,0]))};
+ for(const g of game.training.groups){
+  if(g.load.allout){g.load.speed=(g.load.speed||0)+g.load.allout;g.load.allout=0}
+  if(g.load.interval){g.load.endurance=(g.load.endurance||0)+g.load.interval;g.load.interval=0}
+  for(const key of quickDrills)g.load[key]??=0;
+ }
+ return game.training;
+}
+function quickPace(g){
+ const event=g.stroke==='mixed'?'200 Free':'200 '+g.stroke;
+ const t=training();
+ const seconds=snapshot.results.filter(r=>r.event===event&&t.assignment[r.id]===t.groups.indexOf(g)).map(r=>r.seconds/4).sort((a,b)=>a-b);
+ return {event,split:seconds[Math.floor(seconds.length/2)]??0};
+}
+function groupPlans(){
+ const t=training();
+ return compileTraining({...t,groups:t.groups.map(g=>({...g,sprint:'standard',setEnabled:false,set:{distance:50,reps:8,minutes:1,seconds:0},pace:quickPace(g)}))});
+}
+const groupName=(g,i)=>g.stroke==='mixed'?'第 '+(i+1)+' 组':strokes[g.stroke]+'组';
+function upcomingTaperMeet(){
+ const pool=availableMeets().map(b=>({date:b.meet.date,name:b.meet.name}));
+ for(const m of snapshot.schedule??[]){
+  if(/championship|conference final|wild card|wildcard/i.test(m.name??''))pool.push(m);
+ }
+ const today=Date.parse(dateFor(game.week)),week=604800000;
+ return pool.filter(m=>{const days=Date.parse(m.date)-today;return days>0&&days<=week})
+  .sort((a,b)=>a.date.localeCompare(b.date))[0];
+}
+function coachingPanel(t){
+ const taper=upcomingTaperMeet(),advice=weeklyTrainingAdvice(game);
+ let html='<h3>'+weekLabel(game.week+1)+' · 教练建议</h3>';
+ if(taper)html+='<p><strong>减量周</strong> · '+esc(taper.name)+' · '+esc(taper.date)+'。推荐减轻泳池训练并暂停陆上负荷。</p><button data-taper class="primary">应用赛前减量</button>';
+ html+='<details><summary>查看三组本周训练建议</summary>'+table(['建议分组','状态与调整依据','建议分配'],advice.plan.groups.map((g,i)=>[
+  esc(groupName(g,i)),esc(advice.notes[i]),Object.entries(g.load).filter(([,v])=>v).map(([k,v])=>types[k]+' '+v+'%').join('、')
+ ]))+'</details><p><button data-weekly-coach>应用本周三组建议</button></p>';
+ return '<div class="focus-card">'+html+'</div>';
+}
+function renderGroups(){
+ const t=training(),g=t.groups[selectedGroup];
+ el('groupControls').innerHTML='<div class="row">'+[1,2,3].map(n=>'<button data-count="'+n+'" aria-pressed="'+(t.groups.length===n)+'">'+n+' 组</button>').join('')+'<button data-auto class="primary">自动编组和训练</button></div><small>拖动队员到目标组，或点卡片下方的组号。点姓名查看档案。</small>';
+ el('board').innerHTML='<div class="squad-board">'+t.groups.map((group,i)=>{
+  const people=roster.filter(p=>t.assignment[p.id]===i);
+  return '<div class="squad" data-drop="'+i+'"><strong>'+groupName(group,i)+' · '+captains[i]+' · '+people.length+' 人</strong>'+people.map(p=>{
+   const best=coachEvidence[p.id][0],a=game.athletes[p.id];
+   return '<article class="athlete-card" draggable="true" data-card="'+p.id+'"><button data-person="'+p.id+'">'+esc(p.name)+'</button><small>'+(best?eventLabel(best.event)+' '+time(best.seconds):'暂无开档成绩')+' · 疲劳 '+Math.round(a.current.fatigue)+'</small><div class="row move">'+t.groups.map((_,j)=>'<button data-member="'+p.id+'" data-dest="'+j+'" aria-label="'+esc(p.name)+'移到第 '+(j+1)+' 组" '+(i===j?'disabled':'')+'>'+(j+1)+' 组</button>').join('')+'</div></article>';
+  }).join('')+'</div>';
+ }).join('')+'</div>';
+ const switcher='<div class="row">'+t.groups.map((group,i)=>'<button data-group="'+i+'" aria-pressed="'+(selectedGroup===i)+'">'+groupName(group,i)+'</button>').join('')+'</div>';
+ if(game.plans.length){el('planList').innerHTML='<p>当前存档有旧版待结算计划。推进一周后可使用新版训练。</p>';return}
+ el('planList').innerHTML=coachingPanel(t)+switcher+'<p id="capacity"></p><div class="row"><strong>训练方向</strong>'+[['mixed','综合'],...Object.entries(strokes)].map(([k,v])=>'<button data-stroke="'+k+'" aria-pressed="'+(g.stroke===k)+'">'+v+'</button>').join('')+'</div><div class="plan-table">'+table(['训练内容','占本组容量','分配'],quickDrills.map(key=>[types[key],'<input type="range" min="0" max="100" value="'+g.load[key]+'" data-load="'+key+'" aria-label="'+types[key]+'容量">','<output data-value="'+key+'">'+g.load[key]+'%</output>']))+'</div><small>目标配速按小组泳姿和现有成绩自动设定。</small>';
+ renderCapacity();
+}
+function renderCapacity(){
+ const total=groupTotal(training().groups[selectedGroup]);
+ el('capacity').textContent='已分配 '+total+'% · 剩余 '+(100-total)+'%';
+}
+el('groupControls').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;
+ const t=training();
+ if(b.hasAttribute('data-auto')){
+  if(t.groups.some(g=>groupTotal(g)>0||dryTotal(g.dryland||{})>0)&&!confirm('自动方案会替换分组和泳池训练比例。陆上计划仅保留同泳姿组的配置。继续？'))return;
+  const previous=t.groups;
+  game.training=autoTraining(game);
+  for(const group of game.training.groups){
+   const same=previous.find(p=>p.stroke===group.stroke);
+   if(same?.dryland)group.dryland=same.dryland;
+  }
+  selectedGroup=0;update('已应用自动教练方案。');return;
+ }
+ if(!b.dataset.count)return;
+ const n=Number(b.dataset.count);
+ if(t.groups.slice(n).some(g=>groupTotal(g)>0||dryTotal(g.dryland||{})>0)&&!confirm('缩减组数会移除被撤销组的泳池和陆上训练比例。继续？'))return;
+ while(t.groups.length<n)t.groups.push(defaultGroup());
+ t.groups.length=n;
+ for(const id of ids)if(t.assignment[id]>=n)t.assignment[id]=0;
+ selectedGroup=Math.min(selectedGroup,n-1);update();
+};
+function moveMember(id,dest){
+ const t=training();if(!ids.includes(id)||!t.groups[dest])return;
+ t.assignment[id]=dest;update();
+}
+el('board').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.member)moveMember(b.dataset.member,Number(b.dataset.dest));
+ else if(b.dataset.person){activeAthlete=b.dataset.person;renderProfile()}
+};
+el('board').ondragstart=e=>{const card=e.target.closest('[data-card]');if(card)e.dataTransfer.setData('text/plain',card.dataset.card)};
+el('board').ondragover=e=>{const lane=e.target.closest('[data-drop]');if(lane){e.preventDefault();lane.classList.add('over')}};
+el('board').ondragleave=e=>{const lane=e.target.closest('[data-drop]');if(lane&&!lane.contains(e.relatedTarget))lane.classList.remove('over')};
+el('board').ondragend=()=>el('board').querySelectorAll('.over').forEach(lane=>lane.classList.remove('over'));
+el('board').ondrop=e=>{const lane=e.target.closest('[data-drop]');if(!lane)return;e.preventDefault();lane.classList.remove('over');moveMember(e.dataTransfer.getData('text/plain'),Number(lane.dataset.drop))};
+el('planList').oninput=e=>{
+ const a=e.target,g=training().groups[selectedGroup],key=a.dataset.load;if(!key)return;
+ g.load[key]=Math.min(100-groupTotal(g)+g.load[key],Number(a.value));a.value=g.load[key];
+ el('planList').querySelector('[data-value="'+key+'"]').textContent=g.load[key]+'%';
+ renderCapacity();remember();
+};
+el('planList').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.hasAttribute('data-weekly-coach')){
+  const existing=training().groups;
+  if(existing.some(g=>groupTotal(g)>0||dryTotal(g.dryland||{})>0)&&!confirm('应用本周三组建议会替换泳池计划。陆上计划仅保留同泳姿组配置。继续？'))return;
+  const next=weeklyTrainingAdvice(game).plan;
+  for(const group of next.groups){
+   const prior=existing.find(g=>g.stroke===group.stroke);
+   if(prior?.dryland)group.dryland={...prior.dryland};
+  }
+  game.training=next;selectedGroup=0;update('已应用本周三组建议，可继续手动调整。');return;
+ }
+ if(b.hasAttribute('data-taper')){
+  if(!upcomingTaperMeet())return;
+  if(!confirm('将各组泳池计划设为恢复、清空陆上负荷？应用后仍可手动调整。'))return;
+  for(const g of training().groups){
+   g.load=Object.fromEntries(Object.keys(types).map(key=>[key,key==='recovery'?100:0]));
+   g.dryland={};
+  }
+  training().taperWeek=game.week;
+  update('已应用赛前减量，可继续手动调整。');return;
+ }
+ if(b.dataset.stroke)training().groups[selectedGroup].stroke=b.dataset.stroke;
+ else if(b.dataset.group!==undefined)selectedGroup=Number(b.dataset.group);
+ else return;update();
+};
+
+function renderDryland(){
+ const t=training(),g=t.groups[selectedGroup],plan=g.dryland??={};
+ const n=roster.filter(p=>t.assignment[p.id]===selectedGroup).length;
+ el('drylandPlan').innerHTML='<div class="row">'+t.groups.map((group,i)=>'<button data-dry-group="'+i+'" aria-pressed="'+(selectedGroup===i)+'">'+groupName(group,i)+'</button>').join('')+'</div>'
+  +'<p>'+n+' 名队员 · 沿用泳池训练分组。陆上容量单独计算，疲劳与泳池训练一起结算。</p><p id="dryCapacity"></p>'
+  +'<div class="plan-table">'+table(['训练内容','占陆上容量','分配'],Object.entries(dryDrills).map(([key,drill])=>[
+   drill.label,'<input type="range" min="0" max="100" value="'+(plan[key]||0)+'" data-dry="'+key+'" aria-label="'+drill.label+'容量">',
+   '<output data-dry-value="'+key+'">'+(plan[key]||0)+'%</output>'
+  ]))+'</div><p class="muted">力量练速度，有氧练耐力，活动度练技术。恢复减少疲劳。陆上训练不直接提升赛季状态。</p>';
+ showDryCapacity(plan);
+}
+const dryTotal=plan=>Object.values(plan).reduce((sum,value)=>sum+value,0);
+function showDryCapacity(plan){
+ el('dryCapacity').textContent='已分配 '+dryTotal(plan)+'% · 剩余 '+(100-dryTotal(plan))+'%';
+}
+el('drylandPlan').onclick=e=>{
+ const b=e.target.closest('[data-dry-group]');
+ if(b){selectedGroup=Number(b.dataset.dryGroup);renderDryland()}
+};
+el('drylandPlan').oninput=e=>{
+ const slider=e.target,key=slider.dataset.dry;
+ if(!key)return;
+ const g=training().groups[selectedGroup],plan=g.dryland??={};
+ plan[key]=Math.min(100-dryTotal(plan)+(plan[key]||0),Number(slider.value));
+ slider.value=plan[key];
+ el('drylandPlan').querySelector('[data-dry-value="'+key+'"]').textContent=plan[key]+'%';
+ showDryCapacity(plan);remember();
+};
+
+let meetEvent=null;
+const meetState=()=>game.meet;
+async function readPackZip(file){
+ const limit=16*1024*1024;
+ if(file.size>limit||file.size<30)throw Error('ZIP 大小不符合要求');
+ const bytes=new Uint8Array(await file.arrayBuffer()),v=new DataView(bytes.buffer);
+ const flags=v.getUint16(6,true),method=v.getUint16(8,true),size=v.getUint32(18,true),plain=v.getUint32(22,true);
+ const nameSize=v.getUint16(26,true),offset=30+nameSize+v.getUint16(28,true);
+ if(v.getUint32(0,true)!==0x04034b50||(flags&9)||![0,8].includes(method)||plain>limit||offset+size>bytes.length)throw Error('无法读取 ZIP');
+ const member=new TextDecoder().decode(bytes.slice(30,30+nameSize));
+ if(!['meet.json','season.json'].includes(member))throw Error('ZIP 缺少比赛或赛季清单');
+ let content=bytes.slice(offset,offset+size);
+ if(method===8){
+  const reader=new Blob([content]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+  const chunks=[];let n=0;
+  try{for(;;){const {value,done}=await reader.read();if(done)break;n+=value.length;if(n>limit)throw Error('ZIP 解压后过大');chunks.push(value)}}
+  catch(err){await reader.cancel();throw err}
+  content=new Uint8Array(await new Blob(chunks).arrayBuffer());
+ }
+ if(content.length!==plain)throw Error('ZIP 已损坏');
+ return {member,data:JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(content))};
+}
+async function readMeetZip(file){
+ const {member,data}=await readPackZip(file);
+ if(member!=='meet.json')throw Error('这是赛季基础包，请从数据包标签导入');
+ return validateMeet(data);
+}
+function meetTeamMatches(team){
+ const normalize=value=>value.toLowerCase().replace(/[^a-z0-9]/g,'').replace(/^universityof|university$/g,'');
+ return normalize(team)===normalize(snapshot.name??'Swim Dynasty Demo') ||
+  (snapshot.id==='cal'&&['california','californiaberkeley','cal'].includes(normalize(team)));
+}
+const relayEvent=e=>e.kind==='relay'||e.slots===4;
+const slotEvent=(e,i)=>e.legEvents?.[i%4]??e.pb;
+const roundsFor=e=>e.rounds??1;
+const partsFor=e=>e.parts??(relayEvent(e)?4:e.pb==='200 Back'?4:2);
+const validPB=pb=>/^(50|100|200|500) (Free|Back|Breast|Fly|IM)$/.test(pb);
+function validateMeet(data){
+ const validText=s=>typeof s==='string'&&s.length>0&&s.length<=250;
+ const validTime=n=>Number.isInteger(n)&&n>0&&n<300000;
+ if(![1,2].includes(data.schema)||!validText(data.id)||!validText(data.version)||!validText(data.meet?.name)||!validText(data.meet?.venue)||data.meet.course!=='SCY'||!/^\d{4}-\d\d-\d\d$/.test(data.meet.date)||!Array.isArray(data.meet.teams)||!data.meet.teams.every(validText)||!Array.isArray(data.events)||!data.events.length||data.events.length>30)throw Error('比赛数据格式不受支持');
+ const seen=new Set();
+ for(const e of data.events){
+  const rows=Object.hasOwn(data.results??{},e.id)?data.results[e.id]:null;
+  if(!/^[a-z][a-z0-9-]{0,30}$/.test(e.id)||seen.has(e.id)||!validText(e.label)||!validText(e.unit)||!validPB(e.pb)||!(relayEvent(e)?[4,8]:[2]).includes(e.slots)||![1,4].includes(roundsFor(e))||![1,2,4,10].includes(partsFor(e))||(e.legEvents&&(!Array.isArray(e.legEvents)||e.legEvents.length!==4||!e.legEvents.every(validPB)))||!Array.isArray(rows)||!rows.length||rows.length>40)throw Error('项目数据不完整');
+  seen.add(e.id);
+  for(const r of rows){
+   const validStatus=r.timeCs===null&&['DQ','NS'].includes(r.status);
+   const splits=r.splitsCs;
+   if(!validText(r.name)||!validText(r.team)||(!validStatus&&(!validTime(r.timeCs)||!Number.isInteger(r.place)))||!Array.isArray(splits)||!splits.every(validTime)||splits.length>partsFor(e)||(r.timeCs!==null&&splits.length>0&&(splits.length!==partsFor(e)||splits.reduce((a,b)=>a+b,0)!==r.timeCs))||
+    (relayEvent(e)&&(!Array.isArray(r.legs)||r.legs.length!==4||!r.legs.every((l,i)=>validText(l.name)&&(l.timeCs??null)===(splits[i]??null))))||
+    !Number.isInteger(r.round??1)||(r.round??1)<1||(r.round??1)>roundsFor(e))throw Error('成绩或分段校验失败');
+  }
+ }
+ return data;
+}
+const csText=n=>n==null?'—':(n>=6000?Math.floor(n/6000)+':':'')+((n%6000)/100).toFixed(2).padStart(n>=6000?5:4,'0');
+const splitText=rows=>rows.length?rows.map(csText).join(' / '):'—';
+let meetRound=1,meetSlot=0;
+function prediction(pb){
+ const week=Math.max(1,game.week),view={...game,week,races:{}};
+ return simulate(view,pb)?view.races[week].rows:[];
+}
+// Provisional gameplay defaults, not fitted to this meet.
+const meetTiming={blockStart:0.65,exchange:0.40,minutesPerEventNumber:3,recoveryHalfLife:6,loadTimeCost:0.004};
+const effortFor=pb=>Math.pow(Number(pb.split(' ')[0])/50,0.55);
+function freshMeetLoad(){return new Map()}
+function acuteLoad(load,id,minute){
+ const prior=load.get(id);
+ return prior?prior.amount*2**(-Math.max(0,minute-prior.minute)/meetTiming.recoveryHalfLife):0;
+}
+function logEffort(load,id,minute,pb){
+ load.set(id,{amount:acuteLoad(load,id,minute)+effortFor(pb),minute});
+}
+function simulationRows(e,entries,load=freshMeetLoad(),recordedEntries=entries,roundScored){
+ const pools=new Map();
+ const legs=entries.map((id,i)=>{
+  const pb=slotEvent(e,i);
+  if(!pools.has(pb))pools.set(pb,prediction(pb));
+  const r=pools.get(pb).find(row=>row.id===id);
+  if(!r)throw Error('有选手缺少项目成绩');
+  const exchangeCs=relayEvent(e)&&i%4!==0?Math.round((meetTiming.blockStart-meetTiming.exchange)*100):0;
+  return {id,timeCs:Math.round(r.total*100)-exchangeCs,exchangeCs,fade:r.fade,formPenalty:r.formPenalty,estimate:r.estimate};
+ });
+ const initial=[];
+ if(relayEvent(e)){
+  for(let i=0;i<legs.length;i+=4){
+   const team=legs.slice(i,i+4);
+   initial.push({name:(snapshot.name??'Swim Dynasty Demo')+' '+(i?'B':'A'),timeCs:team.reduce((sum,l)=>sum+l.timeCs,0),splitsCs:team.map(l=>l.timeCs),legs:team});
+  }
+ }else{
+  for(const l of legs){
+   const count=partsFor(e);
+   const splitHalf=(n,k)=>Array.from({length:k},(_,i)=>Math.floor(n/k)+(i<n%k?1:0));
+   const first=Math.round(l.timeCs/(2+l.fade/100));
+   const splits=count===1?[l.timeCs]:[...splitHalf(first,count/2),...splitHalf(l.timeCs-first,count/2)];
+   initial.push({...l,name:names[l.id],splitsCs:splits});
+  }
+ }
+ const actual=meetState().bundle.results[e.id];
+ const startMinute=e.order*meetTiming.minutesPerEventNumber;
+ const relay=relayEvent(e);
+ const opponentRows=actual.filter(r=>(r.round??1)===1&&!meetTeamMatches(r.team));
+ const members=r=>r.legs?r.legs.map(l=>r.opponent?'opponent:'+l.name:l.id):[r.opponent?'opponent:'+r.name:r.id];
+ const opponents=opponentRows.filter(r=>r.timeCs!=null).map(r=>({...r,opponent:true}));
+ const baseOpponentLoad=new Map(opponents.flatMap(r=>members(r).map(id=>[id,acuteLoad(load,id,startMinute)])));
+ let field=[...initial,...opponents];
+ const result=[];
+ for(let round=1;round<=roundsFor(e);round++){
+  const minute=startMinute+(round-1)*(relay?3:2);
+  const times=field.map(r=>{
+   if(roundsFor(e)===1)return {...r,round};
+   const people=members(r);
+   const penalties=people.map((id,i)=>{
+    const prior=acuteLoad(load,id,minute)-(r.opponent?(baseOpponentLoad.get(id)??0):0);
+    const timeCs=relay?(r.splitsCs[i]??r.timeCs/4):r.timeCs;
+    return Math.round(timeCs*clamp(prior*meetTiming.loadTimeCost,-0.012,0.03));
+   });
+   const splits=r.splitsCs.length?r.splitsCs.map((t,i)=>t+(penalties[relay?i:0]??0)):[];
+   return {...r,round,acuteCs:penalties.reduce((a,b)=>a+b,0),
+    timeCs:r.timeCs+penalties.reduce((a,b)=>a+b,0),splitsCs:splits};
+  }).sort((a,b)=>a.timeCs-b.timeCs);
+  roundScored?.(e,times,round===1?opponentRows.filter(r=>r.timeCs==null):[],round);
+  result.push(...times.map(r=>({...r,place:times.findIndex(t=>t.timeCs===r.timeCs)+1})).filter(r=>!r.opponent));
+  for(const r of field)members(r).forEach((id,i)=>logEffort(load,id,minute,slotEvent(e,i)));
+  if(round===1){
+   for(const r of opponentRows.filter(r=>r.timeCs==null))members({...r,opponent:true}).forEach((id,i)=>logEffort(load,id,minute,slotEvent(e,i)));
+   recordedEntries.forEach((id,i)=>{if(id&&!entries.includes(id))logEffort(load,id,minute,slotEvent(e,i))});
+  }
+  const advancingCount=8-round*2;
+  const cutoff=times[advancingCount-1]?.timeCs;
+  const survivors=makesTiedAdvance(e)&&advancingCount>0?times.filter(r=>cutoff===undefined||r.timeCs<=cutoff):times.slice(0,advancingCount);
+  const advancing=new Set(survivors.map(r=>JSON.stringify([r.name,r.team,r.opponent??false])));
+  field=field.filter(r=>advancing.has(JSON.stringify([r.name,r.team,r.opponent??false])));
+ }
+ return result;
+}
+const makesTiedAdvance=e=>Number.isInteger(e.jackpotCs);
+function cslRoundPoints(e,rows,excluded=[],round=1){
+ const scale=relayEvent(e)?2:1;
+ const placePoints=[9,7,6,5,4,3,2,1].slice(0,10-2*round);
+ const sum=(start,count)=>placePoints.slice(start,start+count).reduce((a,b)=>a+b,0)*scale;
+ const scored=rows.map(r=>{
+  const first=rows.findIndex(t=>t.timeCs===r.timeCs);
+  const tied=rows.filter(t=>t.timeCs===r.timeCs).length;
+  return {team:r.team??(snapshot.name??'Swim Dynasty Demo'),points:sum(first,tied)/tied,timeCs:r.timeCs};
+ });
+ if(!scored.length)return scored;
+ const winners=scored.filter(r=>r.timeCs===scored[0].timeCs);
+ const winnerTeams=new Set(winners.map(r=>r.team));
+ let jackpot=sum(scored.length,excluded.length);
+ for(const r of scored){
+  if(!winnerTeams.has(r.team)&&r.timeCs-winners[0].timeCs>=e.jackpotCs){
+   jackpot+=r.points;r.points=0;
+  }
+ }
+ for(const r of winners)r.points+=jackpot/winners.length;
+ return scored;
+}
+function simulateMeet(m){
+ const load=freshMeetLoad(),withScores=m.bundle.meet.qualification==='winner';
+ const points=Object.fromEntries(m.bundle.meet.teams.map(team=>[team,0]));
+ const results=Object.fromEntries([...m.bundle.events].sort((a,b)=>a.order-b.order).map(e=>[
+  e.id,simulationRows(e,m.lineups[e.id],load,m.lineups[e.id],withScores?(event,rows,excluded,round)=>{
+   for(const r of cslRoundPoints(event,rows,excluded,round))points[r.team]+=r.points;
+  }:undefined)
+ ]));
+ if(withScores)m.womenPoints=points;
+ return results;
+}
+
+const meetKey=b=>b.id+':'+b.version;
+function matchesTeam(bundle){
+ return bundle.meet.teams.some(meetTeamMatches);
+}
+function availableMeets(){
+ const listed=new Map();
+ for(const b of [...builtinMeets,...packFiles.filter(f=>f.member==='meet.json').map(f=>f.pack),
+  ...Object.values(game.meetLibrary??{}).map(m=>m.bundle),...(game.meet?[game.meet.bundle]:[])]){
+  if(matchesTeam(b))listed.set(meetKey(b),b);
+ }
+ return [...listed.values()].sort((a,b)=>a.meet.date.localeCompare(b.meet.date));
+}
+function renderMeet(){
+ const m=meetState();
+ const list=availableMeets();
+ el('meetPicker').innerHTML=list.length?'<div class="row">'+list.map((b,i)=>{
+  const key=meetKey(b),selected=m&&meetKey(m.bundle)===key;
+  const saved=selected?m:game.meetLibrary?.[key];
+  return '<button data-meet-choice="'+i+'" aria-pressed="'+Boolean(selected)+'">'+esc(b.meet.date)+' · '+esc(b.meet.name)+(saved?.settled?' · 已结算':'')+'</button>';
+ }).join('')+'</div>':'<p>当前球队没有可用比赛包。可在数据包标签选择目录，或在下方导入 ZIP。</p>';
+ if(!m){el('meetBody').innerHTML='<p class="muted">选择比赛后即可排阵。</p>';return}
+ const b=m.bundle,e=b.events.find(item=>item.id===meetEvent)??b.events[0];
+ meetEvent=e.id;
+ const picks=m.lineups[e.id]??[];
+ const ready=dateFor(game.week)>=b.meet.date;
+ const full=b.events.every(item=>m.lineups[item.id]?.filter(Boolean).length===item.slots);
+ let html='<h3>'+esc(b.meet.name)+'</h3><p>'+esc(b.meet.date)+' · '+esc(b.meet.venue)+' · SCY</p><p class="muted">'+b.meet.teams.map(esc).join(' · ')+'。比赛包包含 '+b.events.length+' 个项目。结算后可对照官方成绩。</p>';
+ html+='<div class="row">'+b.events.map(item=>'<button data-meet-event="'+item.id+'" aria-pressed="'+(item.id===e.id)+'">'+esc(item.label)+' · '+(m.lineups[item.id]?.filter(Boolean).length??0)+'/'+item.slots+'</button>').join('')+'</div>';
+ if(!m.settled){
+  meetSlot=Math.min(meetSlot,e.slots-1);
+  const pb=slotEvent(e,meetSlot);
+  const pool=snapshot.results.filter(r=>r.event===pb).sort((a,b)=>a.seconds-b.seconds);
+  html+='<p><button data-auto-lineup>AI 自动排阵（总分优先）</button>'+(b.events.some(item=>relayEvent(item)&&roundsFor(item)>1)?' <button data-auto-lineup="balanced">AI 双队均衡</button>':'')+' <small>兼顾前面项目、赛间负荷和压轴接力。完整包：14 人名单，每人最多 3 项个人赛、2 项接力，个人 Skins 不计兼项。</small></p><h4>选择要安排的位置</h4>';
+  html+='<div class="row">'+Array.from({length:e.slots},(_,i)=>'<button data-slot="'+i+'" aria-pressed="'+(i===meetSlot)+'">'+(relayEvent(e)?(i<4?'A':'B')+' 队 '+(i%4+1)+' 棒 · '+esc(eventLabel(slotEvent(e,i))):'名额 '+(i+1))+' · '+esc(names[picks[i]]??'空')+'</button>').join('')+'</div>';
+  if(picks[meetSlot])html+='<p><button data-clear-slot>清空此位置</button></p>';
+  html+=table(['队员','开档基准','操作'],pool.map(r=>[esc(names[r.id]),csText(Math.round(r.seconds*100))+(r.kind==='converted'?' <small>'+esc(r.sourceCourse)+' 换算</small>':''),'<button data-entry="'+r.id+'" '+(entryAllowed(m,e,meetSlot,r.id)?'':'disabled')+'>'+(picks[meetSlot]===r.id?'已选':'选入此位置')+'</button>']));
+  html+='<p><button class="primary" data-settle '+(!ready||!full?'disabled':'')+'>模拟并结算比赛</button> <small>'+(!ready?'推进到比赛日后结算。':!full?'请先排满所有项目。':'结算后显示官方成绩及分段。')+'</small></p>';
+ }else{
+  const sim=m.settled[e.id].filter(r=>(r.round??1)===meetRound),actual=b.results[e.id].filter(r=>(r.round??1)===meetRound);
+  if(roundsFor(e)>1)html+='<div class="row">'+[1,2,3,4].map(n=>'<button data-round="'+n+'" aria-pressed="'+(n===meetRound)+'">第 '+n+' 轮</button>').join('')+'</div>';
+  if(!sim.length)html+='<p>本队模拟阵容未晋级此轮。</p>';
+  html+='<h4>你的模拟结果</h4><small>模拟分段是估算。接力首棒用个人出发，后续使用接棒估算；Skins 会累积前项和轮间负荷。对手以首轮实绩作对照。</small>';
+  html+=table(['模拟名次','阵容','模拟成绩','状态影响','接棒 / 轮间修正','每 '+esc(e.unit)+' 分段'],sim.map(r=>[r.place??'—',esc(r.name)+(r.legs?'<br><small>'+r.legs.map(l=>esc(names[l.id])).join(' → ')+'</small>':''),csText(r.timeCs)+((r.estimate||r.legs?.some(l=>l.estimate))?' <small>含换算基准</small>':''),'+'+(r.legs?r.legs.reduce((sum,l)=>sum+(l.formPenalty||0),0):(r.formPenalty||0)).toFixed(2)+' 秒',r.legs?.some(l=>l.exchangeCs!==undefined)||r.acuteCs!==undefined?'接棒 −'+((r.legs?.reduce((sum,l)=>sum+(l.exchangeCs||0),0)??0)/100).toFixed(2)+' / 负荷 '+signed((r.acuteCs??0)/100)+' 秒':'—',splitText(r.splitsCs)]));
+  html+='<h4>官方结果</h4>'+table(['名次','选手 / 队伍','官方成绩','每 '+esc(e.unit)+' 分段','反应时间'],actual.map(r=>[
+   r.place??'—',esc(r.name)+' · '+esc(r.team)+(r.legs?'<br><small>'+r.legs.map(l=>esc(l.name)).join(' → ')+'</small>':''),(r.status&&r.status!=='OK'?esc(r.status):csText(r.timeCs)),splitText(r.splitsCs),
+   r.legs?r.legs.map(l=>Number.isFinite(l.reaction)?l.reaction.toFixed(2):'—').join(' / '):Number.isFinite(r.reaction)?r.reaction.toFixed(2):'—'
+  ]));
+  if(m.womenPoints&&b.meet.qualification==='winner'){
+   const standings=b.meet.teams.map(team=>({team,women:m.womenPoints[team],men:b.meet.officialMensPoints[team]}))
+    .map(r=>({...r,total:r.women+r.men})).sort((a,b)=>b.total-a.total);
+   const leading=standings.filter(r=>r.total===standings[0].total);
+   const headline=leading.length>1?'模拟并列第一 · 出线待判':leading[0].team===(snapshot.name??'Swim Dynasty Demo')?'本队模拟出线':'本队模拟未出线';
+   html+='<h4>'+headline+'</h4><p>男女积分合计第一取得总决赛席位。模拟按历史蝶泳 Skins 和现有轮间模型结算。</p>'+
+    table(['学校','女子模拟','男子实绩','模拟合计','历史合计'],standings.map(r=>[
+     esc(r.team),r.women.toFixed(1),r.men.toFixed(1),r.total.toFixed(1),b.meet.officialCombined[r.team].toFixed(1)
+    ]));
+  }
+  if(b.meet.officialMensPoints&&b.meet.officialCombined){
+   html+='<details><summary>历史积分</summary>'+table(['学校','男子实绩积分','官方合计'],b.meet.teams.map(team=>[
+    esc(team),Number.isFinite(b.meet.officialMensPoints[team])?b.meet.officialMensPoints[team].toFixed(2):'—',
+    Number.isFinite(b.meet.officialCombined[team])?b.meet.officialCombined[team].toFixed(2):'—'
+   ]))+'</details>';
+  }
+ }
+ el('meetBody').innerHTML=html;
+}
+function loadMeet(bundle){
+ if(!matchesTeam(bundle))throw Error('这场比赛与当前赛季球队不匹配。');
+ game.meetLibrary??={};
+ const key=bundle.id+':'+bundle.version;
+ if(game.meet)game.meetLibrary[game.meet.bundle.id+':'+game.meet.bundle.version]=game.meet;
+ game.meet=game.meetLibrary[key]??{bundle,lineups:{},settled:null};
+ meetEvent=null;meetSlot=0;meetRound=1;activeView='meet';update('已加载离线比赛。');
+}
+el('meetFile').onchange=async e=>{
+ const input=e.target,file=input.files[0];if(!file)return;
+ try{
+  const bundle=await readMeetZip(file);
+  loadMeet(bundle);
+ }catch(err){notify('导入失败。'+err.message)}
+ finally{input.value=''}
+};
+el('meetPicker').onclick=e=>{
+ const b=e.target.closest('[data-meet-choice]');if(!b)return;
+ const bundle=availableMeets()[Number(b.dataset.meetChoice)];
+ if(bundle&&(!game.meet||meetKey(game.meet.bundle)!==meetKey(bundle)))loadMeet(bundle);
+};
+function entryAllowed(m,e,slot,id){
+ const current=m.lineups[e.id]??[];
+ if(current.some((pick,i)=>pick===id&&i!==slot))return false;
+ if(m.bundle.schema===1)return true;
+ const used=new Set();
+ let individual=0,relay=0;
+ for(const item of m.bundle.events){
+  const picks=m.lineups[item.id]??[];
+  picks.forEach((p,i)=>{if(p&&(item.id!==e.id||i!==slot))used.add(p)});
+  if(item.id===e.id||!picks.includes(id))continue;
+  if(relayEvent(item))relay++;
+  else if(roundsFor(item)===1)individual++;
+ }
+ return (used.has(id)||used.size<14)&&(relayEvent(e)?relay<2:roundsFor(e)>1||individual<3);
+}
+function individualRankLineups(m){
+ const events=m.bundle.events,pools=new Map();
+ const candidates=pb=>{
+  if(!pools.has(pb))pools.set(pb,prediction(pb).map(r=>r.id));
+  return pools.get(pb);
+ };
+ if(m.bundle.schema===1)return Object.fromEntries(events.map(e=>[e.id,candidates(e.pb).slice(0,e.slots)]));
+ function fill(subset,category,limit){
+  const graph=new Map(),chosen={};
+  function edge(a,b,cap){
+   if(!graph.has(a))graph.set(a,[]);
+   if(!graph.has(b))graph.set(b,[]);
+   const f={to:b,cap},r={to:a,cap:0};f.rev=r;r.rev=f;graph.get(a).push(f);graph.get(b).push(r);return f;
+  }
+  let count=0;
+  for(const e of category){
+   const nodes=chosen[e.id]=[];
+   for(let i=0;i<e.slots;i++){
+    const node='slot:'+e.id+':'+i;edge('start',node,1);count++;
+    nodes.push(candidates(slotEvent(e,i)).filter(id=>subset.has(id)).map(id=>{
+     const key='entry:'+e.id+':'+id,athlete='person:'+id;
+     if(!graph.has(athlete))edge(athlete,'end',limit);
+     if(!graph.has(key))edge(key,athlete,1);
+     return [id,edge(node,key,1)];
+    }));
+   }
+  }
+  function push(node,visited){
+   if(node==='end')return true;
+   if(visited.has(node))return false;
+   visited.add(node);
+   for(const e of graph.get(node)??[]){
+    if(e.cap&&push(e.to,visited)){e.cap--;e.rev.cap++;return true}
+   }
+   return false;
+  }
+  for(let i=0;i<count;i++)if(!push('start',new Set()))return null;
+  return Object.fromEntries(Object.entries(chosen).map(([id,slots])=>[id,slots.map(options=>options.find(([,e])=>!e.cap)[0])]));
+ }
+ const strokes=[...new Set(events.flatMap(e=>Array.from({length:e.slots},(_,i)=>slotEvent(e,i))))];
+ const strength=id=>strokes.reduce((n,pb)=>{const pos=candidates(pb).indexOf(id);return n+(pos<0?0:1/(1+pos));},0);
+ const ranked=ids.slice().sort((a,b)=>strength(b)-strength(a));
+ const individual=events.filter(e=>!relayEvent(e)&&roundsFor(e)===1),relay=events.filter(relayEvent),skins=events.filter(e=>!relayEvent(e)&&roundsFor(e)>1);
+ let best=null,bestCost=Infinity,seed=557;
+ for(let attempt=0;attempt<65;attempt++){
+  const order=ranked.slice();
+  if(attempt)for(let i=order.length-1;i>0;i--){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const j=seed%(i+1);[order[i],order[j]]=[order[j],order[i]]}
+  const subset=new Set(order.slice(0,14));
+  const a=fill(subset,relay,2),b=fill(subset,individual,3),c=fill(subset,skins,1);
+  if(!a||!b||!c)continue;
+  const result={...a,...b,...c};
+  const cost=events.reduce((sum,e)=>sum+result[e.id].reduce((n,id,i)=>n+candidates(slotEvent(e,i)).indexOf(id),0),0);
+  if(cost<bestCost){best=result;bestCost=cost}
+ }
+ if(!best)throw Error('在 14 人及兼项限制下找不到完整阵容，请检查基准覆盖。');
+ return best;
+}
+function autoLineups(m, balanceBoth=false){
+ const initial=individualRankLineups(m);
+ const events=m.bundle.events.slice().sort((a,b)=>a.order-b.order);
+ const finale=events.find(e=>relayEvent(e)&&roundsFor(e)>1);
+ if(!finale)return initial;
+ const earlier=events.filter(e=>e.order<finale.order);
+ const pools=new Map();
+ for(const e of events)for(let i=0;i<e.slots;i++){
+  const pb=slotEvent(e,i);
+  if(!pools.has(pb))pools.set(pb,new Map(prediction(pb).map((r,j)=>[r.id,{time:r.total,rank:j}])));
+ }
+ const earlierCost=lineups=>earlier.reduce((cost,e)=>cost+lineups[e.id].reduce((sum,id,i)=>
+  sum+(pools.get(slotEvent(e,i)).get(id)?.rank??100),0),0);
+ const priorCost=earlierCost(initial);
+ function forecast(lineups,ordered=false){
+  const load=freshMeetLoad();
+  for(const e of earlier)lineups[e.id].forEach((id,i)=>{
+   const minute=e.order*meetTiming.minutesPerEventNumber,pb=slotEvent(e,i);
+   logEffort(load,id,minute,pb);
+   // Plan for a possible second swim. No historical advancement is used.
+   if(roundsFor(e)>1)logEffort(load,id,minute+2,pb);
+  });
+  const minute=finale.order*meetTiming.minutesPerEventNumber;
+  const times=[0,0];
+  for(const [i,id] of lineups[finale.id].entries()){
+   const p=pools.get(slotEvent(finale,i)).get(id);
+   const loadCost=clamp(acuteLoad(load,id,minute)*meetTiming.loadTimeCost,0,0.03);
+   const exchange=i%4===0?0:meetTiming.blockStart-meetTiming.exchange;
+   times[Math.floor(i/4)]+=(p.time-exchange)*(1+loadCost);
+  }
+  if(ordered)return times;
+  times.sort((a,b)=>a-b);
+  // One strong finalist matters most, while keeping a viable second relay.
+  return times[0]+(balanceBoth?0.85:0.25)*times[1]+0.08*Math.max(0,earlierCost(lineups)-priorCost);
+ }
+ const lineups=Object.fromEntries(Object.entries(initial).map(([id,picks])=>[id,picks.slice()]));
+ const shadow={bundle:m.bundle,lineups};
+ let score=forecast(lineups);
+ // Search whole-meet assignments, limiting how far earlier event quality can fall.
+ for(let round=0;round<5;round++){
+  let best=null;
+  const slots=events.flatMap(e=>lineups[e.id].map((id,i)=>({e,i,id})));
+  function inspect(changes){
+   for(const {e,i,to} of changes)lineups[e.id][i]=to;
+   if(changes.every(({e,i,to})=>entryAllowed(shadow,e,i,to))&&earlierCost(lineups)<=priorCost+8){
+    const next=forecast(lineups);
+    if(next<(best?.score??score)-0.0001)best={score:next,changes};
+   }
+   for(const {e,i,id} of changes)lineups[e.id][i]=id;
+  }
+  for(const [j,x] of slots.entries()){
+   const pool=pools.get(slotEvent(x.e,x.i));
+   for(const id of pool.keys())if(id!==x.id)inspect([{...x,to:id}]);
+   for(const y of slots.slice(j+1)){
+    if(x.id===y.id||!pool.has(y.id)||!pools.get(slotEvent(y.e,y.i)).has(x.id))continue;
+    if(x.e.id===y.e.id&&x.e.id!==finale.id)continue;
+    inspect([{...x,to:y.id},{...y,to:x.id}]);
+   }
+  }
+  if(!best)break;
+  for(const {e,i,to} of best.changes)lineups[e.id][i]=to;
+  score=best.score;
+ }
+ if(balanceBoth){
+  const [a,b]=forecast(lineups,true);
+  if(b<a){const list=lineups[finale.id];lineups[finale.id]=[...list.slice(4),...list.slice(0,4)]}
+ }
+ return lineups;
+}
+el('meetBody').onclick=e=>{
+ const b=e.target.closest('button'),m=meetState();if(!b||!m)return;
+ if(b.dataset.meetEvent){meetEvent=b.dataset.meetEvent;meetSlot=0;meetRound=1;renderMeet();return}
+ if(b.dataset.round){meetRound=Number(b.dataset.round);renderMeet();return}
+ if(m.settled)return;
+ if(b.hasAttribute('data-auto-lineup')){
+  if(Object.values(m.lineups).some(p=>p.length)&&!confirm('用 AI 方案替换现有排阵？'))return;
+  try{m.lineups=autoLineups(m,b.dataset.autoLineup==='balanced');update('已安排所有项目。还可以手动换人。')}
+  catch(err){notify(err.message)}
+  return;
+ }
+ const event=m.bundle.events.find(item=>item.id===meetEvent);
+ if(b.dataset.slot!==undefined){meetSlot=Number(b.dataset.slot);renderMeet();return}
+ if(b.hasAttribute('data-clear-slot')){m.lineups[event.id][meetSlot]=null;update();return}
+ if(b.dataset.entry){
+  const id=b.dataset.entry;
+  if(entryAllowed(m,event,meetSlot,id)&&snapshot.results.some(r=>r.id===id&&r.event===slotEvent(event,meetSlot))){
+   const picks=m.lineups[event.id]??=Array(event.slots).fill(null);
+   picks[meetSlot]=id;
+   const next=picks.findIndex(p=>!p);
+   if(next>=0)meetSlot=next;
+  }
+  update();return;
+ }
+ if(b.hasAttribute('data-settle')&&dateFor(game.week)>=m.bundle.meet.date&&m.bundle.events.every(item=>m.lineups[item.id]?.filter(Boolean).length===item.slots)){
+  try{m.settled=simulateMeet(m);update('比赛已结算。')}
+  catch(err){notify(err.message)}
+ }
+};
+
+const packFiles=[];
+let rejectedPacks=[];
+try{packFiles.push(...JSON.parse(sessionStorage.getItem('swim-dynasty-pack-catalog')||'[]'))}catch{}
+// The archive can contain later results. Recompute the opening baseline from
+// dated history every time a season is opened at a chosen start date.
+function seasonForStart(pack, startDate){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||!Number.isFinite(Date.parse(startDate)))throw Error('开档日期无效');
+ const best=new Map(), swimmers=new Set(pack.roster.filter(a=>a.discipline==='swimming').map(a=>a.id));
+ for(const r of [...(pack.history??[]),...pack.results]){
+  if(!swimmers.has(r.id)||!/^\d{4}-\d{2}-\d{2}$/.test(r.date??'')||r.relay||r.flag||r.date>startDate||!Number.isFinite(r.seconds)||r.seconds<=0||!r.event)continue;
+  if((r.sourceCourse??'SCY')!=='SCY'&&r.kind!=='converted')continue;
+  const key=r.id+':'+r.event, old=best.get(key),converted=r.kind==='converted';
+  if(!old||(old.kind==='converted'&&!converted)||((old.kind==='converted')===converted&&r.seconds<old.seconds))best.set(key,r);
+ }
+ const commitments=(pack.commitments??[]).map(r=>{if(!r.openingEvidence)return r;const {dataHubHistory,dataHubUnparsed,...e}=r.openingEvidence;const bests=new Map(),marks=[];for(const m of [...(e.marks??[])].sort((a,b)=>a.date.localeCompare(b.date))){const k=m.event+':'+m.course;if(!Number.isFinite(m.seconds)||m.seconds>=(bests.get(k)??Infinity))continue;bests.set(k,m.seconds);const {rawDetail,...compact}=m;marks.push(compact)}return {...r,openingEvidence:{...e,marks}}});
+ return {...pack,commitments,originalStart:pack.originalStart??pack.start,start:startDate,results:[...best.values()]};
+}
+function validateSeason(p){
+ if(p.kind!=='season'||p.schema!==1||!/^[-\w]{1,80}$/.test(p.id)||!/^[-.\w]{1,80}$/.test(p.version)||typeof p.name!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.start)||!Number.isFinite(Date.parse(p.start))||!Array.isArray(p.roster)||!Array.isArray(p.results)||!Array.isArray(p.schedule)||!Array.isArray(p.staff))throw Error('赛季包格式不受支持');
+ const registered=new Set();
+ for(const a of p.roster){
+  if(!/^[-\w]{1,120}$/.test(a.id)||typeof a.name!=='string'||!['swimming','diving'].includes(a.discipline)||registered.has(a.id))throw Error('赛季名单无效');
+  registered.add(a.id);
+ }
+ const swimmers=new Set(p.roster.filter(a=>a.discipline==='swimming').map(a=>a.id));
+ const seen=new Set();
+ for(const r of p.results){
+  const key=r.id+':'+r.event;
+  if(!swimmers.has(r.id)||typeof r.event!=='string'||!Number.isFinite(r.seconds)||r.seconds<=0||!/^\d{4}-\d{2}-\d{2}$/.test(r.date)||r.date>p.start||seen.has(key))throw Error('赛季成绩无效');
+  seen.add(key);
+ }
+ if(!swimmers.size||!p.results.some(r=>coachEvents.has(r.event)))throw Error('缺少开档游泳成绩');
+ return p;
+}
+async function scanPacks(files){
+ packFiles.length=0;rejectedPacks=[];
+ const candidates=[...files].filter(f=>/\.zip$/i.test(f.name));
+ const seen=new Set();
+ for(const file of candidates){
+  try{
+   const {member,data}=await readPackZip(file);
+   const pack=member==='season.json'?validateSeason(data):validateMeet(data);
+   const key=member+':'+pack.id+':'+pack.version;
+   if(!seen.has(key)){seen.add(key);packFiles.push({member,pack,file:file.name})}
+  }catch(err){rejectedPacks.push(file.name+'：'+err.message)}
+ }
+ try{sessionStorage.setItem('swim-dynasty-pack-catalog',JSON.stringify(packFiles))}catch{}
+ renderPacks();
+}
+const ncaaEvents=['50 Free','100 Free','200 Free','500 Free','1650 Free','100 Back','200 Back','100 Breast','200 Breast','100 Fly','200 Fly','200 IM','400 IM'];
+const ncaaRelays={
+ '200 Free Relay':Array(4).fill('50 Free'),
+ '400 Free Relay':Array(4).fill('100 Free'),
+ '800 Free Relay':Array(4).fill('200 Free'),
+ '200 Medley Relay':['50 Back','50 Breast','50 Fly','50 Free'],
+ '400 Medley Relay':['100 Back','100 Breast','100 Fly','100 Free']
+};
+const ncaaGrades=[[],['Fr.','Freshman','1st Year'],['So.','Sophomore','2nd Year'],['Jr.','Junior','3rd Year'],['Sr.','Senior','4th Year'],['Gr.','Fifth Year','5th Year']];
+let ncaaStage=0;
+function ncaaRoster(pack,year){
+ const cutoff=year===2026?start:year+'-09-18';
+ const baseline=seasonForStart(pack,cutoff);
+ const swimmers=[],departed=[],joined=[],unknown=[];
+ const names=new Set();
+ for(const athlete of pack.roster){
+  if(athlete.discipline!=='swimming')continue;
+  const grade=ncaaGrades.findIndex(group=>group.includes(athlete.year));
+  if(year>2026&&grade<1){unknown.push(athlete.name);continue}
+  if(year>2026&&grade+year-2026>4){departed.push(athlete.name);continue}
+  swimmers.push({name:athlete.name,times:Object.fromEntries(baseline.results.filter(r=>r.id===athlete.id&&!r.relay).map(r=>[r.event,r.seconds]))});
+  names.add(athlete.name.toLowerCase());
+ }
+ for(const recruit of pack.commitments??[]){
+  const known=(recruit.announcedOn||recruit.observedAt||'').slice(0,10);
+  if(!known||known>cutoff||recruit.entryYear>year||names.has(recruit.name.toLowerCase()))continue;
+  const times={};
+  for(const mark of recruit.openingEvidence?.marks??[]){
+   if(mark.course!=='SCY'||!mark.date||mark.date>cutoff||mark.relay||mark.flag||mark.verification==='user_inputted'||!Number.isFinite(mark.seconds)||mark.seconds<=0)continue;
+   times[mark.event]=Math.min(times[mark.event]??Infinity,mark.seconds);
+  }
+  swimmers.push({name:recruit.name,times});
+  names.add(recruit.name.toLowerCase());
+  joined.push(recruit.name);
+ }
+ return {team:pack.name,swimmers,departed,joined,unknown};
+}
+function ncaaRelay(swimmers,legs){
+ const pools=legs.map(event=>swimmers.filter(a=>a.times[event]).sort((a,b)=>a.times[event]-b.times[event]).slice(0,4));
+ let best=null;
+ function pick(names,seconds){
+  if(names.length===4){if(!best||seconds<best.seconds)best={name:names.join(' / '),seconds};return}
+  for(const a of pools[names.length])if(!names.includes(a.name))pick([...names,a.name],seconds+a.times[legs[names.length]]);
+ }
+ pick([],0);
+ return best;
+}
+function ncaaFinal(teams){
+ const entries=Object.fromEntries([...ncaaEvents,...Object.keys(ncaaRelays)].map(e=>[e,[]]));
+ for(const {team,swimmers} of teams){
+  for(const {name,times} of swimmers){
+   const events=ncaaEvents.filter(e=>times[e]).map(e=>[e,swimmers.filter(a=>(a.times[e]??Infinity)<times[e]).length]);
+   events.sort((a,b)=>a[1]-b[1]||a[0].localeCompare(b[0]));
+   for(const [event] of events.slice(0,3))entries[event].push({name,team,seconds:times[event]});
+  }
+  for(const [event,legs] of Object.entries(ncaaRelays)){
+   const relay=ncaaRelay(swimmers,legs);
+   if(relay)entries[event].push({...relay,team});
+  }
+ }
+ const points=[20,17,16,15,14,13,12,11,9,7,6,5,4,3,2,1];
+ const scores=new Map(teams.map(t=>[t.team,0]));
+ let result='';
+ for(const [event,rows] of Object.entries(entries)){
+  for(const r of rows)r.cs=Math.round(r.seconds*100);
+  rows.sort((a,b)=>a.cs-b.cs);
+  const output=[];
+  for(let i=0;i<Math.min(16,rows.length);){
+   let j=i+1;
+   while(j<rows.length&&rows[j].cs===rows[i].cs)j++;
+   const award=points.slice(i,j).reduce((a,b)=>a+b,0)/(j-i)*(event in ncaaRelays?2:1);
+   for(const r of rows.slice(i,j)){
+    scores.set(r.team,scores.get(r.team)+award);
+    output.push([i+1,esc(r.team),esc(r.name),(r.cs/100).toFixed(2),award.toFixed(2)]);
+   }
+   i=j;
+  }
+  result+='<details><summary>'+esc(event)+' · '+output.length+' 名计分</summary>'+table(['名次','学校','运动员','秒','积分'],output)+'</details>';
+ }
+ return table(['学校','积分'],[...scores].sort((a,b)=>b[1]-a[1]).map(([name,p])=>[esc(name),p.toFixed(2)]))+result;
+}
+function renderNcaa(){
+ const catalog=new Map(packFiles.filter(p=>p.member==='season.json').map(({pack})=>[pack.id,pack]));
+ if(snapshot.id&&!catalog.has(snapshot.id))catalog.set(snapshot.id,snapshot);
+ const year=ncaaStage===0?2026:ncaaStage<=2?2027:2028;
+ const teams=[...catalog.values()].map(pack=>ncaaRoster(pack,year));
+ const titles=['2026–27 开档','2027–28 换季','2028 NCAA 女子游泳决赛试算','2028–29 换季'];
+ const buttons=['推进至 2027–28 赛季','举办 2028 NCAA 决赛','推进至 2028–29 赛季','从开档重跑'];
+ return '<section class="panel" id="ncaaProjection"><h3>'+titles[ncaaStage]+'</h3><p>'+teams.length+
+  ' 校 · 按年级推算离队，按届别推算秋季入队。决赛使用 2027 秋季基准，接力用个人成绩估算。赛会不含跳水、资格筛选及预赛。</p>'+
+  (ncaaStage===2?ncaaFinal(teams):table(['学校','在队','入队（累计）','离队（累计）','年级待核对'],
+  teams.map(t=>[esc(t.team),t.swimmers.length,esc(t.joined.join('、')),esc(t.departed.join('、')),esc(t.unknown.join('、'))])))+
+  '<button data-ncaa-next>'+buttons[ncaaStage]+'</button></section>';
+}
+
+function renderPacks(){
+ const coach=snapshot.staff?.find(r=>/director of women|head coach/i.test(r.position));
+ if(snapshot.id){
+  el('teamTitle').textContent=snapshot.name+(coach?' · '+coach.name:'');
+  el('seasonTitle').textContent='泳池 / 训练计划';
+ }
+ el('packList').innerHTML='<p>当前赛季：'+esc(snapshot.name??'内置演示')+'</p>'
+ +(snapshot.id?'<button data-builtin>返回内置赛季</button>':'')
+ +(packFiles.length?'<h3>目录中的数据包</h3>':'<p class="muted">选择一次目录，游戏会扫描其中的 ZIP。</p>')
+ +packFiles.map(({member,pack,file},i)=>'<article class="panel"><strong>'+esc(pack.name??pack.meet.name)+'</strong> <small>'+esc(file)+'</small><p>'+(member==='season.json'?pack.roster.length+' 名运动员 · '+pack.schedule.length+' 场赛程 · '+pack.results.length+' 条开档成绩':esc(pack.meet.date)+' · '+pack.events.length+' 个项目')+'</p>'+(member==='season.json'?'<label>开档日期<input type="date" data-start-date="'+i+'" value="'+esc(pack.start)+'"></label>':'')+'<button data-load-pack="'+i+'">'+(member==='season.json'?'进入该赛季':'加载比赛')+'</button></article>').join('')
+ +(rejectedPacks.length?'<details><summary>未识别的 ZIP</summary><ul>'+rejectedPacks.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul></details>':'');
+ if(packFiles.some(p=>p.member==='season.json'))el('packList').innerHTML+=renderNcaa();
+ if(snapshot.schedule?.length)el('packList').innerHTML+='<details><summary>查看赛程</summary>'+table(['日期','比赛','对手'],snapshot.schedule.map(m=>[esc(m.date),esc(m.name),Array.isArray(m.opponents)?m.opponents.map(esc).join('、'):'—']))+'</details>';
+ if(snapshot.commitments?.length)el('packList').innerHTML+='<details><summary>查看 2027 / 2028 届承诺记录</summary>'+
+  table(['入学届别','运动员','首次采集','状态','截至当前日期的已收录成绩'],snapshot.commitments.map(r=>[
+   esc(r.entryYear),esc(r.name),esc(r.observedAt?.slice(0,10)??'—'),
+   r.observedAt?.slice(0,10)>dateFor(game.week)?'存档内尚未公开':'来源报道，待校方核验',
+   (r.openingEvidence?.marks??[]).filter(m=>m.date<=dateFor(game.week)).map(m=>esc(m.event+' · '+m.course+' · '+m.seconds+' 秒'+(m.verification==='user_inputted'?'（用户录入，待核验）':''))).join('；')||'暂无'
+  ].map((v,i)=>r.observedAt?.slice(0,10)>dateFor(game.week)&&(i===1||i===4)?'—':v)))+'</details>';
+
+}
+el('packFolder').onchange=async e=>{await scanPacks(e.target.files);e.target.value=''};
+el('packList').onclick=async e=>{
+ const b=e.target.closest('button');if(!b)return;
+ try{
+  if(b.hasAttribute('data-ncaa-next')){ncaaStage=(ncaaStage+1)%4;renderPacks();el('ncaaProjection').scrollIntoView();return}
+  if(b.hasAttribute('data-builtin')){await seasonStore('delete');localStorage.removeItem(activeSeasonKey);location.reload();return}
+  if(b.dataset.loadPack===undefined)return;
+  const {member,pack}=packFiles[Number(b.dataset.loadPack)];
+  if(member==='season.json'){const date=document.querySelector('[data-start-date="'+b.dataset.loadPack+'"]')?.value||pack.start;const selected=seasonForStart(pack,date);validateSeason(selected);await seasonStore('put',selected);location.reload();return}
+  loadMeet(pack);
+ }catch(err){notify('无法加载数据包。'+err.message)}
+};
+
+update();
+
+</script>
+</body></html>
